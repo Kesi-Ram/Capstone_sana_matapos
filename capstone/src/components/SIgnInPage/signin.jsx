@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import './signin.css'
 
 
-function Signin() {
+export default function SigninPage({ onLogin }) {
 
   const [showPassword, setShowPassword] = useState(false)
 
@@ -26,10 +26,9 @@ function Signin() {
           </div>
         </div>
 
-        <button className="btn" type="submit">Sign In</button>
+        <button className="btn" type="submit" onClick={onLogin}>Sign In</button>
       </form>
     </main>
   )
 }
 
-export default Signin
