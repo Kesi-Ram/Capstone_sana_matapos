@@ -1,163 +1,112 @@
 import { useState } from "react";
-import Sidebar from "../dashboardComponents/Sidebar";
-import RoomTable from "../dashboardComponents/roomTable";
-import AddRoomModal from "../dashboardComponents/editRoomModal";
+import Sidebar from "./Sidebar";
+import RoomTable from "./roomTable";
+import RoomModal from "./editRoomModal";
 import { initialRooms } from "../data/rooms";
+import ClassTable from "./classTable";
+import { initialClasses } from "../data/classes";
+import ClassModal from "./classModal";
+import AssignRoomModal from "./assignRoomModal";
 
-export default function Dashboard() {
+export default function MainDash() {
   const [rooms, setRooms] = useState(initialRooms);
   const [activePage, setActivePage] = useState("Overview");
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRoom, setEditRoom] = useState(null);
+  const [classes, setClasses] = useState(initialClasses);
+  const [isClassModalOpen, setIsClassModalOpen] = useState(false);
+  const [assignTarget, setAssignTarget] = useState(null);
 
-  const available = rooms.filter(
-    (rooms) => rooms.status === "Available"
-  ).length;
-
-  const occupied = rooms.filter(
-    (rooms) => rooms.status === "Occupied"
-  ).length;
-
-  const maintenance = rooms.filter(
-    (rooms) => rooms.status === "Maintenance"
-  ).length;
+const stats = [
+  { label: "Total rooms", value: rooms.length },
+  { label: "Class meetings", value: classes.length },
+  { label: "Waiting for a room", value: classes.filter((meeting) => meeting.roomId === null).length },
+];
 
   function handleAddRoom() {
     setEditRoom(null);
     setIsModalOpen(true);
   }
 
-  function handleEditRoom(rooms) {
-    setEditRoom(rooms);
+  function handleEditRoom(room) {
+    setEditRoom(room);
     setIsModalOpen(true);
   }
 
   function handleSaveRoom(roomData) {
     if (editRoom) {
       setRooms((prev) =>
-        prev.map((rooms) =>
-          rooms.id === editRoom.id
-            ? { ...roomData, id: editRoom.id }
-            : rooms
+        prev.map((room) =>
+          room.id === editRoom.id ? { ...roomData, id: editRoom.id } : room
         )
       );
     } else {
       setRooms((prev) => [
         ...prev,
-        {
-          ...roomData,
-          id: Math.max(0, ...prev.map((rooms) => rooms.id)) + 1,
-        },
+        { ...roomData, id: Math.max(0, ...prev.map((room) => room.id)) + 1 },
       ]);
     }
   }
 
-  function handleDeleteRoom(id) {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this room?"
-    );
+function handleSaveClass(classData) {
+  setClasses((prev) => [
+    ...prev,
+    { ...classData, id: Math.max(0, ...prev.map((meeting) => meeting.id)) + 1 },
+  ]);
+}
 
-    if (confirmed) {
-      setRooms((prev) => prev.filter((rooms) => rooms.id !== id));
-    }
+function handleDeleteClass(id) {
+  if (window.confirm("Delete this class meeting?")) {
+    setClasses((prev) => prev.filter((meeting) => meeting.id !== id));
   }
+}
+
+// roomId = a room's id to assign, or null to unassign.
+function handleAssignRoom(meetingId, roomId) {
+  setClasses((prev) =>
+    prev.map((meeting) => (meeting.id === meetingId ? { ...meeting, roomId } : meeting))
+  );
+  setAssignTarget(null);
+}
+
+function handleDeleteRoom(id) {
+  if (window.confirm("Delete this room? Classes assigned to it will become unassigned.")) {
+    setRooms((prev) => prev.filter((room) => room.id !== id));
+    setClasses((prev) =>
+      prev.map((meeting) => (meeting.roomId === id ? { ...meeting, roomId: null } : meeting))
+    );
+  }
+}
 
   return (
     <div className="dashboard-layout">
-      <Sidebar
-        activePage={activePage}
-        setActivePage={setActivePage}
-      />
+      <Sidebar activePage={activePage} setActivePage={setActivePage} />
 
       <main className="main-content">
         <header className="topbar">
           <div>
-            <span className="breadcrumb">
-              Workspace / {activePage}
-            </span>
+            <span className="breadcrumb">Workspace / {activePage}</span>
             <h1>{activePage}</h1>
           </div>
 
-          <div className="topbar-right">
-
-            <div className="topbar-profile">
-              <div className="profile-avatar">A</div>
-              <div>
-                <strong>Administrator</strong>
-                <span>System Admin</span>
-              </div>
+          <div className="topbar-profile">
+            <div className="profile-avatar">A</div>
+            <div>
+              <strong>Administrator</strong>
+              <span>System Admin</span>
             </div>
           </div>
         </header>
 
         {activePage === "Overview" && (
-          <>
-            <section className="welcome-section">
-              <button className="btn-primary" onClick={handleAddRoom}>
-                + Add Room
-              </button>
-            </section>
-
-            <section className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-top">
-                  <span>Total Rooms</span>
-                  <span className="stat-icon blue">▣</span>
-                </div>
-                <h2>{rooms.length}</h2>
-                <p>Registered rooms</p>
+          <section className="stats-grid">
+            {stats.map((stat) => (
+              <div className="stat-card" key={stat.label}>
+                <span>{stat.label}</span>
+                <h2>{stat.value}</h2>
               </div>
-
-              <div className="stat-card">
-                <div className="stat-top">
-                  <span>Available</span>
-                  <span className="stat-icon green">✓</span>
-                </div>
-                <h2>{available}</h2>
-                <p>Ready for use</p>
-              </div>
-
-              <div className="stat-card">
-                <div className="stat-top">
-                  <span>Occupied</span>
-                  <span className="stat-icon orange">◷</span>
-                </div>
-                <h2>{occupied}</h2>
-                <p>Currently in use</p>
-              </div>
-
-              <div className="stat-card">
-                <div className="stat-top">
-                  <span>Maintenance</span>
-                  <span className="stat-icon red">⚙</span>
-                </div>
-                <h2>{maintenance}</h2>
-                <p>Unavailable rooms</p>
-              </div>
-            </section>
-
-            <section className="content-section">
-              <div className="section-heading">
-                <div>
-                  <h2>Room Management</h2>
-                  <p>View and manage registered rooms.</p>
-                </div>
-                <button
-                  className="btn-outline"
-                  onClick={() => setActivePage("Rooms")}
-                >
-                  View All Rooms →
-                </button>
-              </div>
-
-              <RoomTable
-                rooms={rooms.slice(0, 5)}
-                onEdit={handleEditRoom}
-                onDelete={handleDeleteRoom}
-              />
-            </section>
-          </>
+            ))}
+          </section>
         )}
 
         {activePage === "Rooms" && (
@@ -165,45 +114,62 @@ export default function Dashboard() {
             <div className="section-heading">
               <div>
                 <h2>All Rooms</h2>
-                <p>Manage your registered campus rooms.</p>
+                <p>Rooms given to the department.</p>
               </div>
-
-              <button className="btn-primary" onClick={handleAddRoom}>
-                + Add Room
-              </button>
+              <button className="btn-primary" onClick={handleAddRoom}>+ Add Room</button>
             </div>
 
-            <RoomTable
-              rooms={rooms}
-              onEdit={handleEditRoom}
-              onDelete={handleDeleteRoom}
-            />
+            <RoomTable rooms={rooms} onEdit={handleEditRoom} onDelete={handleDeleteRoom} />
           </section>
         )}
 
-        {activePage === "Schedules" && (
-          <section className="placeholder-page">
-            <div className="placeholder-icon">▤</div>
-            <h2>Schedule Management</h2>
-            <p>Room schedules and availability will appear here.</p>
-          </section>
-        )}
+{activePage === "Classes" && (
+  <section className="content-section">
+    <div className="section-heading">
+      <div>
+        <h2>Class Meetings</h2>
+        <p>Each lecture and lab is a separate meeting.</p>
+      </div>
+      <button className="btn-primary" onClick={() => setIsClassModalOpen(true)}>+ Add Class</button>
+    </div>
+
+    <ClassTable
+      classes={classes}
+      rooms={rooms}
+      onAssign={setAssignTarget}
+      onDelete={handleDeleteClass}
+    />
+  </section>
+)}
 
         {activePage === "Users" && (
           <section className="placeholder-page">
-            <div className="placeholder-icon">♙</div>
             <h2>User Management</h2>
-            <p>Manage administrator and user accounts here.</p>
+            <p>Manage user accounts here.</p>
           </section>
         )}
       </main>
 
-      <AddRoomModal
+      <RoomModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveRoom}
         editRoom={editRoom}
       />
+      
+      <ClassModal
+  isOpen={isClassModalOpen}
+  onClose={() => setIsClassModalOpen(false)}
+  onSave={handleSaveClass}
+/>
+
+<AssignRoomModal
+  meeting={assignTarget}
+  rooms={rooms}
+  classes={classes}
+  onClose={() => setAssignTarget(null)}
+  onAssign={handleAssignRoom}
+/>
     </div>
   );
 }

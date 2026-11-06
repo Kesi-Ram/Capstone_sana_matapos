@@ -1,7 +1,7 @@
 const navigation = [
   { name: "Overview"},
   { name: "Rooms"},
-  { name: "Schedules"},
+  { name: "Classes"},
   { name: "Users"},
 ];
 
