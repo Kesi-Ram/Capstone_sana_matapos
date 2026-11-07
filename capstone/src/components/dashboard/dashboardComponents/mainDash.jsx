@@ -8,7 +8,7 @@ import { initialClasses } from "../data/classes";
 import ClassModal from "./classModal";
 import AssignRoomModal from "./assignRoomModal";
 
-export default function MainDash() {
+export default function MainDash({ user, onLogout }) {
   const [rooms, setRooms] = useState(initialRooms);
   const [activePage, setActivePage] = useState("Overview");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -88,15 +88,17 @@ function handleDeleteRoom(id) {
             <span className="breadcrumb">Workspace / {activePage}</span>
             <h1>{activePage}</h1>
           </div>
-
-          <div className="topbar-profile">
-            <div className="profile-avatar">A</div>
-            <div>
-              <strong>Administrator</strong>
-              <span>System Admin</span>
-            </div>
+      <div className="topbar-profile">
+        <div className="profile-avatar">{user.name[0]}</div>
+          <div>
+          <strong>{user.name}</strong>
+          <span>{user.email}</span>
           </div>
-        </header>
+            <button className="btn-secondary btn-small" onClick={onLogout}>
+            Log out
+            </button>
+        </div>
+      </header>
 
         {activePage === "Overview" && (
           <section className="stats-grid">
