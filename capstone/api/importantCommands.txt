@@ -1,0 +1,6 @@
+
+run sql on xampp 
+
+C:\xampp\php\php.exe -S localhost:8000 -t api - open php server
+
+npm run dev - run project

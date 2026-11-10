@@ -1,27 +1,33 @@
 import { useMemo, useState } from "react";
+import { MAJORS, ROOM_TYPES } from "../data/rooms";
 
 export default function RoomTable({ rooms = [], onEdit, onDelete }) {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [typeFilter, setTypeFilter] = useState("All");
+  const [majorFilter, setMajorFilter] = useState("All");
+  const [minCapacity, setMinCapacity] = useState("");
 
   const filteredRooms = useMemo(() => {
-    return rooms.filter((rooms) => {
+    const query = search.trim().toLowerCase();
+
+    return rooms.filter((room) => {
       const matchesSearch =
-        rooms.name.toLowerCase().includes(search.toLowerCase()) ||
-        rooms.building.toLowerCase().includes(search.toLowerCase());
+        room.name.toLowerCase().includes(query) ||
+        room.building.toLowerCase().includes(query);
+      const matchesType = typeFilter === "All" || room.type === typeFilter;
+      const matchesMajor =
+        majorFilter === "All" || room.allowedMajors.includes(majorFilter);
+      const matchesCapacity =
+        minCapacity === "" || room.capacity >= Number(minCapacity);
 
-      const matchesStatus =
-        statusFilter === "All" || rooms.status === statusFilter;
-
-      return matchesSearch && matchesStatus;
+      return matchesSearch && matchesType && matchesMajor && matchesCapacity;
     });
-  }, [rooms, search, statusFilter]);
+  }, [rooms, search, typeFilter, majorFilter, minCapacity]);
 
   return (
-    <div className="table-container">
+    <div>
       <div className="table-toolbar">
         <div className="search-box">
-          <span>⌕</span>
           <input
             type="text"
             placeholder="Search rooms or buildings..."
@@ -30,87 +36,72 @@ export default function RoomTable({ rooms = [], onEdit, onDelete }) {
           />
         </div>
 
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="filter-select"
-        >
-          <option value="All">All statuses</option>
-          <option value="Available">Available</option>
-          <option value="Occupied">Occupied</option>
-          <option value="Maintenance">Maintenance</option>
+        <select className="filter-select" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+          <option value="All">All types</option>
+          {ROOM_TYPES.map((type) => (
+            <option key={type} value={type}>{type}</option>
+          ))}
         </select>
+
+        <select className="filter-select" value={majorFilter} onChange={(e) => setMajorFilter(e.target.value)}>
+          <option value="All">All majors</option>
+          {MAJORS.map((major) => (
+            <option key={major} value={major}>{major}</option>
+          ))}
+        </select>
+
+        <input
+          className="filter-select"
+          type="number"
+          min="1"
+          placeholder="Min capacity"
+          value={minCapacity}
+          onChange={(e) => setMinCapacity(e.target.value)}
+        />
       </div>
 
       <div className="table-scroll">
-        <table className="room-table">
+        <table className="data-table">
           <thead>
             <tr>
-              <th>ROOM NAME</th>
-              <th>LOCATION</th>
-              <th>CAPACITY</th>
-              <th>TYPE</th>
-              <th>STATUS</th>
-              <th>ACTIONS</th>
+              <th>Room</th>
+              <th>Location</th>
+              <th>Capacity</th>
+              <th>Type</th>
+              <th>Allowed majors</th>
+              <th>Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {filteredRooms.length > 0 ? (
-              filteredRooms.map((rooms) => (
-                <tr key={rooms.id}>
-                  <td>
-                    <div className="room-name">
-                      <div className="room-icon">▣</div>
-                      <strong>{rooms.name}</strong>
-                    </div>
-                  </td>
-
+              filteredRooms.map((room) => (
+                <tr key={room.id}>
+                  <td><strong>{room.name}</strong></td>
                   <td>
                     <div className="location-cell">
-                      <strong>{rooms.building}</strong>
-                      <span>{rooms.floor}</span>
+                      <span>{room.building}</span>
+                      <small>{room.floor}</small>
                     </div>
                   </td>
-
-                  <td>{rooms.capacity} seats</td>
-                  <td>{rooms.type}</td>
-
+                  <td>{room.capacity} seats</td>
+                  <td>{room.type}</td>
                   <td>
-                    <span
-                      className={`status-badge ${rooms.status.toLowerCase()}`}
-                    >
-                      <span className="status-dot"></span>
-                      {rooms.status}
-                    </span>
+                    {room.allowedMajors.map((major) => (
+                      <span className="tag" key={major}>{major}</span>
+                    ))}
                   </td>
-
                   <td>
                     <div className="action-buttons">
-                      <button
-                        className="action-btn"
-                        title="Edit room"
-                        onClick={() => onEdit(rooms)}
-                      >
-                        ✎
-                      </button>
-
-                      <button
-                        className="action-btn delete-btn"
-                        title="Delete room"
-                        onClick={() => onDelete(rooms.id)}
-                      >
-                        ×
-                      </button>
+                      <button className="action-btn" title="Edit room" onClick={() => onEdit(room)}>✎</button>
+                      <button className="action-btn delete-btn" title="Delete room" onClick={() => onDelete(room.id)}>×</button>
                     </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="empty-state">
-                  No rooms found.
-                </td>
+                <td colSpan="6" className="empty-state">No rooms found.</td>
               </tr>
             )}
           </tbody>
