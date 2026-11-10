@@ -1,7 +1,7 @@
 export async function signIn({ email, password }) {
   let res;
   try {
-    res = await fetch("/api/auth/login", {
+    res = await fetch("/api/login.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -18,7 +18,7 @@ export async function signIn({ email, password }) {
 // Returns the logged-in user, or null. Never throws.
 export async function getCurrentUser() {
   try {
-    const res = await fetch("/api/auth/me");
+    const res = await fetch("/api/me.php");
     if (!res.ok) return null;
     const data = await res.json();
     return data.user;
@@ -28,5 +28,5 @@ export async function getCurrentUser() {
 }
 
 export async function signOut() {
-  await fetch("/api/auth/logout", { method: "POST" });
+  await fetch("/api/logout.php", { method: "POST" });
 }
