@@ -1,0 +1,50 @@
+
+run sql on xampp 
+
+C:\xampp\php\php.exe -S localhost:8000 -t api - open php server
+
+npm run dev - run project
+
+
+database.sql - file the iimport sa sql pag irurun sa ibang PC 
+
+db.php - key na ginagamit ng php files para makapasok sa main content
+
+seed_admin.php - file na ginamit para gawin yung admin account
+
+login.php - nag checheck ng input tas hahanapin sa table kung nag match
+
+me.php = gives the user a "badge" or "mark" so that it knows that you are logged in, para kapag nag refresh ka ng page signed in ka padin
+
+logout.php - basically removes your login badge
+
+signin,jsx - is ung nakikita ng tao tas kung san nag iinput
+
+auth.js - messenger, nag sesend ng input mo sa login
+
+vite config.js - pang open ng server na file
+
+
+
+
+
+
+
+login flow:
+
+sign in page(signin.jsx) - input mo yung credentials
+
+auth.js - kukunin niya ung input mo ibibigay niya sa login
+
+vite config.js - transporter ng message sa port ng php
+
+log in.php - ichecheck niya yung input mo kung meron ka sa table 
+
+db.php - gagamitin ng log in.php ung file na to para macheck niya ung table 
+
+log in.php - babalik na ung log in php tas bibigyan ka ng "badge" kung meron ka sa table
+
+auth.jsx - signin page - app.jsx > irereceive nung auth ung message tas ibabalik sa program tas makakapasok kana
+
+log out - pag nag log out ka naman tatanggalin lang neto ung "badge" mo as "signed in"
+
