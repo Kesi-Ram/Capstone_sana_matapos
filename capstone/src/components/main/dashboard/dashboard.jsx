@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./dashboard.css";
 
-function Dashboard({ user, onLogout }) {
+function Dashboard({ user}) {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -38,7 +38,6 @@ function Dashboard({ user, onLogout }) {
         <p>Welcome back, {user.name}</p>
       </div>
 
-      <button onClick={onLogout}>Logout</button>
     </header>
 
     <div className="stats-grid">

@@ -1,5 +1,240 @@
-*{
-    margin: auto;
-    padding: 0;
-    font-family: 'Poppins', sans-serif;
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+  width: 100%;
+}
+
+#root {
+  max-width: none;
+  padding: 0;
+}
+
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #c6dacb;
+}
+
+.admin-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-placeholder {
+  padding: 32px;
+  color: #1f2a24;
+}
+
+
+
+
+/* LIGHT THEME */
+.admin-layout {
+  --page-bg: #C6DACB;
+  --sidebar-bg: #FFFFFF;
+  --card-bg: #FFFFFF;
+  --surface: #EAF3EC;
+  --text: #1F2A24;
+  --muted: #56685C;
+  --accent: #3E6649;
+  --border: #D8E4DA;
+  --hover: #3E6649;
+  --primary: #4F7D5C;
+
+  background: var(--page-bg);
+  color: var(--text);
+}
+
+/* DARK THEME */
+.admin-layout[data-theme="dark"] {
+  --page-bg: #14221B;
+  --sidebar-bg: #FFFFFF;
+  --card-bg: #22382C;
+  --surface: #2B4635;
+  --text: #F1F7F2;
+  --muted: #B6C9BB;
+  --accent: #AAD8B6;
+  --border: #3B5545;
+  --hover: #2F4B3A;
+  --primary: #4F7D5C;
+}
+
+
+/* MAIN PAGE BACKGROUNDS */
+.admin-layout .dashboard,
+.admin-layout .requests-page,
+.admin-layout .page-placeholder {
+  background: var(--page-bg);
+  color: var(--text);
+}
+
+/* SIDEBAR */
+.admin-layout .admin-sidebar {
+  background: var(--sidebar-bg);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.admin-layout .sidebar-brand h2,
+.admin-layout .sidebar-link,
+.admin-layout .sidebar-user-info strong {
+  color: var(--text);
+}
+
+.admin-layout .sidebar-brand p,
+.admin-layout .sidebar-user-info span {
+  color: var(--muted);
+}
+
+.admin-layout .sidebar-footer {
+  border-color: var(--border);
+}
+
+.admin-layout .sidebar-link.active {
+  background: var(--surface);
+  color: var(--accent);
+}
+
+.admin-layout .sidebar-link:hover,
+.admin-layout .sidebar-logout:hover {
+  background: var(--hover);
+}
+
+/* DASHBOARD CARDS AND TABLES */
+.admin-layout .stat-card,
+.admin-layout .table-container,
+.admin-layout .requests-table-container {
+  background: var(--card-bg);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.admin-layout .stat-card h2,
+.admin-layout .requests-header h1,
+.admin-layout .section-header h2 {
+  color: var(--accent);
+}
+
+.admin-layout .requests-table th,
+.admin-layout .requests-list-table th {
+  background: var(--surface);
+  color: var(--accent);
+}
+
+.admin-layout .requests-table td,
+.admin-layout .requests-list-table td {
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.admin-layout .requests-table tbody tr:hover,
+.admin-layout .requests-list-table tbody tr:hover {
+  background: var(--hover);
+}
+
+/* REQUESTS PAGE */
+.admin-layout .requests-tab {
+  color: var(--text);
+}
+
+.admin-layout .requests-tab.active,
+.admin-layout .tab-count {
+  background: var(--surface);
+  color: var(--accent);
+}
+
+.admin-layout .requests-search {
+  background: var(--card-bg);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.admin-layout .requests-search::placeholder {
+  color: var(--muted);
+}
+
+/* SECONDARY TEXT */
+.admin-layout .requests-header p,
+.admin-layout .dashboard-header p,
+.admin-layout .requests-end-date,
+.admin-layout .requests-table-footer {
+  color: var(--muted);
+}
+
+/* SIDEBAR BUTTONS */
+.admin-layout .sidebar-theme,
+.admin-layout .sidebar-logout {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.admin-layout .sidebar-theme {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.admin-layout .sidebar-theme:hover,
+.admin-layout .sidebar-logout:hover {
+  background: var(--hover);
+}
+
+.admin-layout .sidebar-theme:focus-visible,
+.admin-layout .sidebar-logout:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Sidebar stays white in both themes */
+.admin-layout .admin-sidebar {
+  background: #FFFFFF;
+  color: #1F2A24;
+  border-color: #D8E4DA;
+}
+
+.admin-layout .sidebar-brand h2,
+.admin-layout .sidebar-link,
+.admin-layout .sidebar-user-info strong {
+  color: #1F2A24;
+}
+
+.admin-layout .sidebar-brand p,
+.admin-layout .sidebar-user-info span {
+  color: #56685C;
+}
+
+.admin-layout .sidebar-footer {
+  border-color: #D8E4DA;
+}
+
+.admin-layout .sidebar-link.active {
+  background: #EAF3EC;
+  color: #3E6649;
+}
+
+.admin-layout .sidebar-link:hover {
+  background: #F1F6F2;
+}
+
+.admin-layout .sidebar-theme,
+.admin-layout .sidebar-logout {
+  background: #FFFFFF;
+  color: #1F2A24;
+  border-color: #D8E4DA;
+}
+
+.admin-layout .sidebar-theme:hover,
+.admin-layout .sidebar-logout:hover {
+  background: #F1F6F2;
 }

@@ -20,7 +20,9 @@
 .signin form {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 1rem;
+  width: 100%;
 }
 
 /* Labels sit above their inputs */

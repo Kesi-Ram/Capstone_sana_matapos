@@ -1,7 +1,8 @@
 
 import "./Sidebar.css";
 
-function Sidebar({ user, activePage, onNavigate, onLogout }) {
+
+function Sidebar({ user, activePage, onNavigate, onLogout, theme, onToggleTheme }) {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: "▦" },
     { id: "requests", label: "Requests", icon: "▤" },
@@ -51,6 +52,15 @@ function Sidebar({ user, activePage, onNavigate, onLogout }) {
           </div>
         </div>
 
+        <button
+            type="button"
+            className="sidebar-theme"
+            onClick={onToggleTheme}
+            aria-pressed={theme === "dark"}
+        >
+              {theme === "dark" ? "Light Mode" : "Dark Mode"}
+        </button>
+        
         <button
           type="button"
           className="sidebar-logout"
