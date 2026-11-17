@@ -4,7 +4,7 @@ import "./request.css";
 
 function Requests() {
   const [requests, setRequests] = useState([]);
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -33,12 +33,15 @@ function Requests() {
 
   // Count requests according to status
   const countByStatus = (status) => {
+    if (status === "all") {
+    return requests.length;
+    }
     return requests.filter((request) => request.status === status).length;
-  };
+  };    
 
   // Filter requests by status and search text
   const filteredRequests = requests.filter((request) => {
-    const matchesStatus = request.status === activeTab;
+  const matchesStatus = activeTab === "all" || request.status === activeTab;
 
     const searchText = [
       request.control_number,
@@ -83,7 +86,7 @@ function Requests() {
 
       <div className="requests-toolbar">
         <div className="requests-tabs">
-          {["pending", "approved", "rejected"].map((status) => (
+          {["all", "pending", "approved", "rejected"].map((status) => (
             <button
               type="button"
               key={status}
