@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Signin from './components/SigninPage/signin'
+import Main from './components/dashboard/dashboardComponents/main'
 
 
 import { getCurrentUser, signOut } from './api/auth'
@@ -24,7 +25,7 @@ function App() {
   if (checking) return null
 
   return user ? (
-    <MainDash user={user} onLogout={handleLogout} />
+    <Main user={user} onLogout={handleLogout} />
   ) : (
     <Signin onLogin={setUser} />
   )
