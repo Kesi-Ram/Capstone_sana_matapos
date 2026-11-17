@@ -1047,3 +1047,125 @@ footer {
     padding: 5px;
   }
 }
+.btn.small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.row-click {
+  cursor: pointer;
+}
+
+.row-click:hover {
+  background: var(--green-soft);
+}
+
+.row-link {
+  color: var(--green);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.print-only {
+  display: none;
+}
+
+/* read-only detail rows */
+.detail-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.9fr) minmax(0, 1.4fr);
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--line);
+  font-size: 12px;
+}
+
+.detail-row:last-child {
+  border-bottom: 0;
+}
+
+.detail-label {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.detail-value {
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.detail-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.detail-sign {
+  display: flex;
+  flex-direction: column;
+  margin: 10px 0;
+}
+
+.detail-sign-name {
+  min-height: 34px;
+  padding-top: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.detail-sign-date {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.detail-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 760px) {
+  .detail-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block;
+  }
+
+  .print-title {
+    margin-bottom: 8px;
+    text-align: center;
+    font-size: 12px;
+  }
+
+  .print-title strong {
+    font-size: 15px;
+  }
+
+  .detail-row {
+    padding: 3px 0;
+  }
+
+  .table-wrap {
+    overflow: visible;
+  }
+}
