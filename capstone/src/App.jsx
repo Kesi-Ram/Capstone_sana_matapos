@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import Signin from './components/SigninPage/signin'
-import MainDash from './components/dashboard/dashboardComponents/mainDash'
-import './components/dashboard/dashboardComponents/dashboard.css'
+
+
 import { getCurrentUser, signOut } from './api/auth'
 
 function App() {

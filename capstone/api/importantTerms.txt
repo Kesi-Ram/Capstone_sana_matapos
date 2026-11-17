@@ -5,6 +5,7 @@ C:\xampp\php\php.exe -S localhost:8000 -t api - open php server
 
 npm run dev - run project
 
+http://localhost:8000/file
 
 database.sql - file the iimport sa sql pag irurun sa ibang PC 
 
