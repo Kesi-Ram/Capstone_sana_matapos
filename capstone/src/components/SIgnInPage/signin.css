@@ -3,16 +3,17 @@
   max-width: 360px;
   margin: 10vh auto 0;
   padding: 2rem;
-  background: #4d8648;
+  background: #C6DACB;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  font-family: Inter, Arial, sans-serif;
 }
 
 .header {
   margin: 0 0 1.5rem;
   text-align: center;
   font-size: 1.5rem;
-  color: rgb(233, 233, 233);
+  color: #1F2A24;
 }
 
 /* Stacks the two field groups and the button vertically with even spacing */
@@ -29,7 +30,7 @@
   margin-bottom: 0.35rem;
   font-size: 0.9rem;
   font-weight: 600;
-  color: rgb(233, 233, 233);
+  color: #1F2A24;
 }
 
 .signin input {
@@ -57,10 +58,11 @@
 }
 
 .btn:hover {
-  background: #2449c4;
+  background: #3E6649;
 }
 .signin__password {
   position: relative;
+
 }
 
 .signin__password input {
