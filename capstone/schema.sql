@@ -18,11 +18,11 @@
 -- On an existing DB with a participants_type ENUM, the seed uses its FIRST
 -- permitted ENUM value to avoid inserting an invalid option.
 
-CREATE DATABASE IF NOT EXISTS `campus_rooms`
+CREATE DATABASE IF NOT EXISTS `db`
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_general_ci;
 
-USE `campus_rooms`;
+USE `db`;
 
 -- 1. ADMIN ACCOUNTS
 CREATE TABLE IF NOT EXISTS `users` (
