@@ -1,0 +1,134 @@
+body{
+  margin: 0;
+}
+.dashboard {
+  min-height: 100vh;
+  padding: 32px;
+  background-color: #C6DACB;
+  color: #1F2A24;
+  font-family: Inter, Arial, sans-serif;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.dashboard-header p {
+  color: #3E6649;
+}
+
+.dashboard-header button {
+  padding: 10px 20px;
+  background-color: #4F7D5C;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.stat-card {
+  padding: 24px;
+  background-color: white;
+  border: 1px solid #d8e4da;
+  border-radius: 10px;
+}
+
+.stat-card p {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+.stat-card h2 {
+  margin: 0;
+  font-size: 32px;
+  color: #3E6649;
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.recent-section {
+  margin-top: 32px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-header h2 {
+  font-size: 20px;
+  color: #1F2A24;
+}
+
+.table-container {
+  background: white;
+  border: 1px solid #d8e4da;
+  border-radius: 10px;
+  overflow-x: auto;
+}
+
+.requests-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.requests-table th {
+  background-color: #EAF3EC;
+  color: #3E6649;
+  padding: 14px 16px;
+  font-weight: 600;
+}
+
+.requests-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.requests-table tbody tr:hover {
+  background-color: #3E6649;
+}
+
+.request-status {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.request-status--pending {
+  background-color: #fff4db;
+  color: #946200;
+}
+
+.request-status--approved {
+  background-color: #e3f3e7;
+  color: #28643d;
+}
+
+.request-status--rejected {
+  background-color: #fde8e8;
+  color: #b42318;
+}
