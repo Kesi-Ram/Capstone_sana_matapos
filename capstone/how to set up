@@ -1,0 +1,11 @@
+open or clone the merged files in the device
+
+import schema
+
+open and start xampp
+
+run server - C:\xampp\php\php.exe -S localhost:8000 -t .\admin\api
+
+npm run dev on admin - cd admin, npm run dev
+
+npm run on user - cd user, cd usc-sarf-user, npm run dev
