@@ -163,3 +163,111 @@
     min-width: 750px;
   }
 }
+
+/* APPROVE AND REJECT BUTTONS */
+
+.details-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.details-approve-btn,
+.details-reject-btn {
+  padding: 11px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.details-approve-btn {
+  background: #4F7D5C;
+  color: white;
+  border: none;
+}
+
+.details-approve-btn:hover {
+  background: #3E6649;
+}
+
+.details-reject-btn {
+  background: #B42318;
+  color: white;
+  border: none;
+}
+
+.details-reject-btn:hover {
+  background: #912018;
+}
+
+.details-actions button:disabled,
+.reject-modal-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* REJECTION MODAL */
+
+.reject-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.reject-modal {
+  background: var(--card-bg, white);
+  color: var(--text, #1F2A24);
+  border-radius: 12px;
+  padding: 28px;
+  width: 100%;
+  max-width: 450px;
+  box-sizing: border-box;
+}
+
+.reject-modal h2 {
+  margin-top: 0;
+}
+
+.reject-modal p {
+  color: var(--muted, #56685C);
+  font-size: 14px;
+}
+
+.reject-modal label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.reject-modal textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid var(--border, #D8E4DA);
+  border-radius: 8px;
+  background: var(--card-bg, white);
+  color: var(--text, #1F2A24);
+  font-family: inherit;
+  resize: vertical;
+}
+
+.reject-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.reject-modal-actions button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}

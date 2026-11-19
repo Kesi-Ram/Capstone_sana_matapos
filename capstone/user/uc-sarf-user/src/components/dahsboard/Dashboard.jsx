@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { loadRequests } from '../utils/storage'
+import { loadRequests } from '../../utils/storage'
 import Facilities from './Facilities'
 
 export default function Dashboard() {

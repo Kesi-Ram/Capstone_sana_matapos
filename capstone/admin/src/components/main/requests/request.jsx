@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import "./request.css";
+import RequestDetails from "./requestDetails";
 
 function Requests() {
   const [requests, setRequests] = useState([]);
@@ -8,6 +9,7 @@ function Requests() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedRequest, setSelectedRequest] = useState(null);
 
   // Retrieve reservation requests from the PHP API
   useEffect(() => {
@@ -72,8 +74,18 @@ function Requests() {
     });
   }
 
+    if (selectedRequest) {
+    return (
+      <RequestDetails
+        request={selectedRequest}
+        onBack={() => setSelectedRequest(null)}
+      />
+    );
+  }
+  
   if (loading) return <p>Loading requests...</p>;
   if (error) return <p>{error}</p>;
+
 
   return (
     <div className="requests-page">
@@ -121,6 +133,7 @@ function Requests() {
               <th>Facility</th>
               <th>Date & Time</th>
               <th>Status</th>
+              <th>Action</th>
             </tr>
           </thead>
 
@@ -142,12 +155,21 @@ function Requests() {
                     {request.status}
                   </span>
                 </td>
+                <td>
+                <button
+                  type="button"
+                  className="view-details-btn"
+                  onClick={() => setSelectedRequest(request)}
+                >
+                  View Details
+                </button>
+                </td>
               </tr>
             ))}
 
             {filteredRequests.length === 0 && (
               <tr>
-                <td colSpan="6" className="requests-empty">
+                <td colSpan="7" className="requests-empty">
                   No matching requests found.
                 </td>
               </tr>

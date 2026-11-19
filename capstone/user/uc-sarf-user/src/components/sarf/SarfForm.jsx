@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { FormContext } from './FormContext'
 import { CheckGroup, Input, RadioGroup, SignBlock, TextArea } from './fields'
 import SupportCard from './SupportCard'
@@ -7,19 +7,89 @@ import {
   ACTIVITY_TYPES, PARTICIPANTS, CHECKLIST, BMO, LMO, ITSS, ADMIN, CHARGES,
   INSURANCE_COLUMNS, INSURANCE_ROWS,
 } from '../../data/sarfOptions'
-import { VENUES } from '../../data/bookings'
-import { buildBookings, bookingsForVenue, rangeConflicts } from '../../utils/schedule'
-import { clearDraft, loadDraft, loadRequests, saveDraft, saveRequest } from '../../utils/storage'
-
+import { rangeConflicts } from '../../utils/schedule'
+import { clearDraft, loadDraft, saveDraft } from '../../utils/storage'
+import { bookingsForVenue} from '../../utils/schedule'
+import { submitSarf } from '../../api/requests'
 const EMPTY_FORM = {
-  participants: [], checklist: [], bmo: [], lmo: [], itss: [], admin: [], charges: [],
+  facilityId:'', participants: [], checklist: [], bmo: [], lmo: [], itss: [], admin: [], charges: [],
 }
 
 export default function SarfForm() {
   const [values, setValues] = useState(() => ({ ...EMPTY_FORM, ...(loadDraft() || {}) }))
   const [message, setMessage] = useState(null)
   const [formKey, setFormKey] = useState(0) // bump to also clear the file input
-  const [bookings, setBookings] = useState(() => buildBookings(loadRequests()))
+
+  const API_BASE_URL = 'http://localhost/capstone_sana_matapos/capstone/admin/api'
+
+  const [facilities, setFacilities] = useState([])
+  const [facilitiesLoading, setFacilitiesLoading] = useState(true)
+  const [facilitiesError, setFacilitiesError] = useState('')
+
+  const [bookings, setBookings] = useState([])
+  const [availabilityLoading, setAvailabilityLoading] = useState(false)
+  const [availabilityError, setAvailabilityError] = useState('')
+
+useEffect(() => {
+  async function loadFacilities() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/facilities.php`)
+
+      if (!response.ok) {
+        throw new Error('Could not load facilities.')
+      }
+
+      const facilityList = await response.json()
+      setFacilities(facilityList)
+    } catch (error) {
+      setFacilitiesError('Could not load the facility list.')
+    } finally {
+      setFacilitiesLoading(false)
+    }
+  }
+
+  loadFacilities()
+}, [])
+
+useEffect(() => {
+  async function loadAvailability() {
+    if (!values.facilityId) {
+      setBookings([])
+      setAvailabilityError('')
+      return
+    }
+
+    setAvailabilityLoading(true)
+    setAvailabilityError('')
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/availability.php?facility_id=${values.facilityId}`
+      )
+
+      if (!response.ok) {
+        throw new Error('Could not load availability.')
+      }
+
+      const bookingRows = await response.json()
+
+      // The calendar expects JavaScript Date values, so convert the PHP date strings.
+      const calendarBookings = bookingRows.map((booking) => ({
+        start: new Date(booking.start),
+        end: new Date(booking.end),
+      }))
+
+      setBookings(calendarBookings)
+    } catch (error) {
+      setBookings([])
+      setAvailabilityError('Could not load availability for this facility.')
+    } finally {
+      setAvailabilityLoading(false)
+    }
+  }
+
+  loadAvailability()
+}, [values.facilityId])
 
   const api = useMemo(() => ({
     values,
@@ -49,13 +119,11 @@ export default function SarfForm() {
   }
 
   function handleSaveDraft() {
-    const ok = saveDraft(values)
-    show(ok ? 'ok' : 'error', ok
-      ? 'Draft saved in this browser. You can continue on this device.'
-      : 'Could not save the draft. Check that browser storage is enabled.')
-  }
+  saveDraft(values)
+  show('ok', 'Draft saved.')
+}
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault() // native `required` checks have already passed at this point
     if (!values.start || !values.end) {
       show('error', 'Select the activity start and end date/time.')
@@ -69,22 +137,28 @@ export default function SarfForm() {
       show('error', 'The selected schedule overlaps a booked time slot for this venue. Choose another date or time.')
       return
     }
-    const id = `SARF-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`
-    saveRequest({
-      id,
-      title: values.title,
-      venue: values.venue,
-      date: new Date(values.start).toLocaleString(),
-      status: 'Pending',
-      stage: 'President/Organizer',
-      data: values,
-      submittedAt: new Date().toISOString(),
-    })
-    clearDraft()
-    setBookings(buildBookings(loadRequests()))
-    setValues(EMPTY_FORM)
-    setFormKey((k) => k + 1)
-    show('ok', `SARF submitted in this browser prototype. Control No.: ${id}. This does not yet send the request to UC signatories.`)
+    if (availabilityLoading || availabilityError) {
+      show('error', 'Wait for the facility availability to load before submitting.')
+      return
+    }
+
+    if (rangeConflicts(bookings, new Date(values.start), new Date(values.end))) {
+      show('error', 'The selected schedule overlaps a booked time slot. Choose another time.')
+      return
+    }
+
+
+try {
+  const result = await submitSarf(values)
+
+  clearDraft()
+  setValues(EMPTY_FORM)
+  setFormKey((key) => key + 1)
+
+  show('ok', `SARF submitted. Control No.: ${result.controlNumber}`)
+} catch (error) {
+  show('error', error.message)
+}
   }
 
   return (
@@ -131,13 +205,32 @@ export default function SarfForm() {
               <Input name="title" label="Title of Activity Program" required />
               <TextArea name="nature" label="Nature of Activity" required />
               <span className="lb">Activity Date/Time <em>*</em></span>
-              <DateTimePicker label="Start" mode="start" value={values.start} onChange={handleStartChange} bookings={venueBookings} />
-              <DateTimePicker label="End" mode="end" value={values.end} minValue={values.start}
-                onChange={(v) => api.setField('end', v)} bookings={venueBookings} />
+              <DateTimePicker label="Start" mode="start" value={values.start} onChange={handleStartChange} bookings={bookings} />
+              <DateTimePicker label="End" mode="end" value={values.end} minValue={values.start} onChange={(value) => api.setField('end', value)} bookings={bookings}/>
               <small className="muted">Taken slots follow the venue entered below. With no venue entered, all campus bookings are shown.</small>
-              <Input name="venue" label="Venue/Location" required list="venue-list" />
-              <datalist id="venue-list">{VENUES.map((v) => <option key={v} value={v} />)}</datalist>
-            </div>
+              <label className="ln">Venue/Location <em>*</em>
+                <select
+                  name="facilityId"
+                  value={values.facilityId ?? ''}
+                  onChange={(event) => api.setField('facilityId', event.target.value)}
+                  required
+                  disabled={facilitiesLoading || Boolean(facilitiesError)}
+                >
+                  <option value="">
+                  {facilitiesLoading ? 'Loading facilities...' : 'Select a venue'}
+                  </option>
+                      {facilities.map((facility) => (
+                  <option key={facility.id} value={facility.id}>
+                    {facility.name}
+                  </option>
+                  ))}
+                </select>
+              </label>
+          </div>
+
+                {facilitiesError && <small className="error">{facilitiesError}</small>}
+                {availabilityLoading && <small className="muted">Checking availability...</small>}
+                {availabilityError && <small className="error">{availabilityError}</small>}
 
             <div className="box">
               <span className="lb">Participants</span>
