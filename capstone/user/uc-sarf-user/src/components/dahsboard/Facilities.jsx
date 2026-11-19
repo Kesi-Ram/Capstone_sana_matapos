@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 
+// Change this URL to match where facilities.php is saved under htdocs.
+const FACILITIES_API_URL ='http://localhost/capstone_sana_matapos/capstone/admin/api/facilities.php'
+
 function FacilityIcon({ type }) {
   const icons = {
     gymnasium: <><circle cx="12" cy="12" r="9" /><path d="M12 3v9l7.8 4.5M12 12l-7.8 4.5M6 5.3l6 3.5 6-3.5M3 12h4l5 8 5-8h4" /></>,
@@ -24,8 +27,7 @@ function formatTime(value) {
   return `${hour % 12 || 12}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`
 }
 
-// Change this URL to match where facilities.php is saved under htdocs.
-const FACILITIES_API_URL ='http://localhost/capstone_sana_matapos/capstone/admin/api'
+
 
 function getIconType(name) {
   // For example, "Function Hall A" becomes "function-hall-a".

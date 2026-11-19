@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react'
-import { loadRequests } from '../../utils/storage'
+import { useEffect, useRef, useState } from "react";
 import {
   BMO, LMO, ITSS, ADMIN, CHARGES, INSURANCE_COLUMNS, INSURANCE_ROWS,
 } from '../../data/sarfOptions'
+
+const API_URL = "http://localhost/capstone_sana_matapos/capstone/admin/api";
 
 // ---------- helpers ----------
 const fmtDateTime = (v) =>
@@ -92,8 +93,47 @@ function SupportView({ title, venue, listLabel, items, d, prefix, approver, extr
 
 // ---------- page ----------
 export default function RequestView({ id, autoPrint }) {
-  const request = loadRequests().find((r) => r.id === id)
-  const printed = useRef(false)
+const [request, setRequest] = useState(null);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState("");
+const printed = useRef(false);
+
+useEffect(() => {
+  async function fetchRequest() {
+    try {
+      const response = await fetch(`${API_URL}/my-requests.php`, {
+        credentials: "include",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Could not load this request.");
+      }
+
+      const foundRequest = (result.requests || []).find(
+        (item) => String(item.id) === String(id)
+      );
+
+      if (!foundRequest) {
+        throw new Error("Request not found.");
+      }
+
+      const formData =
+        typeof foundRequest.form_data === "string"
+          ? JSON.parse(foundRequest.form_data || "{}")
+          : foundRequest.form_data || {};
+
+      setRequest({ ...foundRequest, data: formData });
+    } catch (fetchError) {
+      setError(fetchError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  fetchRequest();
+}, [id]);
 
   // Opened from "Print / PDF": open the print dialog once the page has rendered.
   useEffect(() => {
@@ -107,17 +147,19 @@ export default function RequestView({ id, autoPrint }) {
     return () => clearTimeout(t)
   }, [autoPrint, request, id])
 
-  if (!request) {
-    return (
-      <section className="form-section">
-        <h2>Request not found</h2>
-        <p className="section-sub">
-          No SARF with Control No. {id} exists in this browser.
-        </p>
-        <a className="btn" href="#/">Back to Dashboard</a>
-      </section>
-    )
-  }
+if (loading) {
+  return <section className="form-section"><p>Loading request...</p></section>;
+}
+
+if (error || !request) {
+  return (
+    <section className="form-section">
+      <h2>Could not open request</h2>
+      <p className="section-sub">{error || "Request not found."}</p>
+      <a className="btn" href="#/">Back to Dashboard</a>
+    </section>
+  );
+}
 
   const d = request.data || {}
 
@@ -128,12 +170,11 @@ export default function RequestView({ id, autoPrint }) {
           <div className="eyebrow">SARF PREVIEW</div>
           <h1>{request.id}</h1>
           <p>
-            <span className="status-pill">{request.status}</span> · Current step: {request.stage}
+            <span className="status-pill">{request.status}</span>
           </p>
         </div>
         <div className="table-actions">
           <a className="btn secondary" href="#/">← My Requests</a>
-          <a className="btn secondary" href="#/submitted">Submitted Forms</a>
           <button className="btn" type="button" onClick={() => window.print()}>
             Print / Save as PDF
           </button>
@@ -142,7 +183,6 @@ export default function RequestView({ id, autoPrint }) {
 
       <div className="print-only print-title">
         <strong>UNIVERSITY OF THE CORDILLERAS</strong>
-        <div>Student Activity Request Form for On-Campus · UC-AR-FORM-36 · Rev.01</div>
         <div>Control No.: {request.id}</div>
       </div>
 

@@ -5,7 +5,7 @@ import "./Sidebar.css";
 function Sidebar({ user, activePage, onNavigate, onLogout, theme, onToggleTheme }) {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: "▦" },
-    { id: "requests", label: "Requests", icon: "▤" },
+    { id: "requests", label: "All Requests", icon: "▤" },
     { id: "schedule", label: "Schedule", icon: "▦" },
     { id: "facilities", label: "Facilities", icon: "▥" },
   ];

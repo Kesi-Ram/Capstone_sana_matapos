@@ -1,7 +1,7 @@
-
 import { useEffect, useState } from "react";
 import "./request.css";
 import RequestDetails from "./requestDetails";
+
 
 function Requests() {
   const [requests, setRequests] = useState([]);
@@ -10,6 +10,7 @@ function Requests() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   // Retrieve reservation requests from the PHP API
   useEffect(() => {
@@ -36,22 +37,26 @@ function Requests() {
   // Count requests according to status
   const countByStatus = (status) => {
     if (status === "all") {
-    return requests.length;
+      return requests.length;
     }
+
     return requests.filter((request) => request.status === status).length;
-  };    
+  };
 
   // Filter requests by status and search text
   const filteredRequests = requests.filter((request) => {
-  const matchesStatus = activeTab === "all" || request.status === activeTab;
+    const matchesStatus =
+      activeTab === "all" || request.status === activeTab;
 
     const searchText = [
       request.control_number,
       request.organization,
       request.name_of_program,
       request.nature_of_activity,
-      request.facility
-    ].join(" ").toLowerCase();
+      request.facility,
+    ]
+      .join(" ")
+      .toLowerCase();
 
     const matchesSearch = searchText.includes(search.toLowerCase());
 
@@ -70,22 +75,86 @@ function Requests() {
       day: "numeric",
       year: "numeric",
       hour: "numeric",
-      minute: "2-digit"
+      minute: "2-digit",
     });
   }
 
-    if (selectedRequest) {
+  async function updateRequestStatus(id, newStatus, reason = "") {
+  setSaving(true);
+
+  try {
+    const response = await fetch("/api/update_request_status.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        id: id,
+        status: newStatus,
+        reason: reason,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Could not update the request.");
+
+      
+    }
+
+    const updatedFields = { status: newStatus };
+
+    if (newStatus === "rejected") {
+    updatedFields.reject_reason = reason;
+}
+
+    setRequests((currentRequests) =>
+      currentRequests.map((item) =>
+        item.id === id ? { ...item, status: newStatus } : item
+      )
+    );
+
+    setSelectedRequest((currentRequest) =>
+      currentRequest
+        ? { ...currentRequest, status: newStatus }
+        : currentRequest
+    );
+  } finally {
+    setSaving(false);
+  }
+}
+  if (selectedRequest) {
     return (
       <RequestDetails
-        request={selectedRequest}
-        onBack={() => setSelectedRequest(null)}
-      />
+  request={selectedRequest}
+  onBack={() => setSelectedRequest(null)}
+  onStatusUpdated={(newStatus) => {
+    setRequests((currentRequests) =>
+      currentRequests.map((item) =>
+        item.id === selectedRequest.id
+          ? { ...item, status: newStatus }
+          : item
+      )
     );
-  }
-  
+
+    setSelectedRequest((currentRequest) =>
+      currentRequest
+        ? { ...currentRequest, status: newStatus }
+        : currentRequest
+    );
+  }}
+
+  onApprove={(id) => updateRequestStatus(id, "approved")}
+  onReject={(id, reason) =>
+  updateRequestStatus(id, "rejected", reason)
+}
+saving={saving}
+/>
+    );
+  } 
+
   if (loading) return <p>Loading requests...</p>;
   if (error) return <p>{error}</p>;
-
 
   return (
     <div className="requests-page">
@@ -102,14 +171,13 @@ function Requests() {
             <button
               type="button"
               key={status}
-              className={`requests-tab ${activeTab === status ? "active" : ""}`}
+              className={`requests-tab ${
+                activeTab === status ? "active" : ""
+              }`}
               onClick={() => setActiveTab(status)}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
-
-              <span className="tab-count">
-                {countByStatus(status)}
-              </span>
+              <span className="tab-count">{countByStatus(status)}</span>
             </button>
           ))}
         </div>
@@ -119,7 +187,7 @@ function Requests() {
           className="requests-search"
           placeholder="Search requests..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(event) => setSearch(event.target.value)}
         />
       </div>
 
@@ -156,13 +224,13 @@ function Requests() {
                   </span>
                 </td>
                 <td>
-                <button
-                  type="button"
-                  className="view-details-btn"
-                  onClick={() => setSelectedRequest(request)}
-                >
-                  View Details
-                </button>
+                  <button
+                    type="button"
+                    className="view-details-btn"
+                    onClick={() => setSelectedRequest(request)}
+                  >
+                    View Details
+                  </button>
                 </td>
               </tr>
             ))}

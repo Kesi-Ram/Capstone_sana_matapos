@@ -165,9 +165,7 @@ try {
     <FormContext.Provider value={api}>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">UC-AR-FORM-36 · March 29, 2021 · Rev.01</div>
           <h1>Student Activity Request Form for On-Campus</h1>
-          <p>Online version of the two-page UC form</p>
         </div>
         <button className="btn secondary" type="button" onClick={() => window.print()}>
           Print / Save as PDF
@@ -275,11 +273,6 @@ try {
             <div className="box">
               <span className="lb">Checklist: (For Review Use Only)</span>
               <CheckGroup name="checklist" options={CHECKLIST} />
-              <label className="lb mt">
-                Attach supporting documents
-                <input type="file" name="attachments" multiple />
-              </label>
-              <small className="muted">Prototype note: attachments are not uploaded or stored on a server yet.</small>
             </div>
 
             <div className="box">

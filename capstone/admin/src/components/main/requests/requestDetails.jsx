@@ -1,8 +1,13 @@
-
-import "./requestDetails.css";
 import { useState } from "react";
+import "./requestDetails.css";
 
-function RequestDetails({request, onBack, onApprove, onReject, saving = false}) {
+function RequestDetails({
+  request,
+  onBack,
+  onApprove,
+  onReject,
+  saving = false,
+}) {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [actionError, setActionError] = useState("");
@@ -22,13 +27,46 @@ function RequestDetails({request, onBack, onApprove, onReject, saving = false}) 
 
     return date.toLocaleString("en-PH", {
       dateStyle: "medium",
-      timeStyle: "short"
+      timeStyle: "short",
     });
+  }
+
+  async function handleApprove() {
+    setActionError("");
+
+    if (!onApprove) return;
+
+    const confirmed = window.confirm(
+      "Have you verified the signed SARF and request details?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await onApprove(request.id);
+    } catch (error) {
+      setActionError(error.message);
+    }
+  }
+
+  async function handleReject(event) {
+    event.preventDefault();
+    setActionError("");
+
+    if (!rejectReason.trim() || !onReject) return;
+
+    try {
+      await onReject(request.id, rejectReason.trim());
+      setShowRejectModal(false);
+      setRejectReason("");
+    } catch (error) {
+      setActionError(error.message);
+    }
   }
 
   return (
     <div className="request-details">
-      <button className="details-back" onClick={onBack}>
+      <button type="button" className="details-back" onClick={onBack}>
         ← Back to Requests
       </button>
 
@@ -68,12 +106,12 @@ function RequestDetails({request, onBack, onApprove, onReject, saving = false}) 
           </div>
 
           <div>
-            <label>Start Date & Time</label>
+            <label>Start Date &amp; Time</label>
             <p>{formatDate(request.start_datetime)}</p>
           </div>
 
           <div>
-            <label>End Date & Time</label>
+            <label>End Date &amp; Time</label>
             <p>{formatDate(request.end_datetime)}</p>
           </div>
 
@@ -133,15 +171,6 @@ function RequestDetails({request, onBack, onApprove, onReject, saving = false}) 
             </p>
           </div>
 
-          <div>
-            <label>SARF Attachment</label>
-            <p>
-              {request.scan_path
-                ? "Attachment recorded"
-                : "No attachment uploaded"}
-            </p>
-          </div>
-
           {request.status === "rejected" && (
             <div>
               <label>Rejection Reason</label>
@@ -150,104 +179,86 @@ function RequestDetails({request, onBack, onApprove, onReject, saving = false}) 
           )}
         </div>
       </section>
-        {request.status === "pending" && (
+
+      {request.status === "pending" && (
         <div className="details-actions">
-        <button
+          <button
             type="button"
             className="details-reject-btn"
             disabled={saving || !onReject}
-            onClick={() => setShowRejectModal(true)}
-        >
-         Reject Request
-        </button>
+            onClick={() => {
+              setActionError("");
+              setShowRejectModal(true);
+            }}
+          >
+            Reject Request
+          </button>
 
-        <button
-        type="button"
-        className="details-approve-btn"
-        disabled={saving || !onApprove}
-        onClick={() => {
-        const confirmed = window.confirm(
-          "Have you verified the signed SARF and request details?"
-        );
-
-        if (confirmed) {
-          onApprove(request.id);
-        }
-      }}
-    >
-      {saving ? "Processing..." : "Approve Request"}
-    </button>
-  </div>
-)}
-
-{showRejectModal && (
-  <div className="reject-overlay">
-    <div
-      className="reject-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="reject-modal-title"
-    >
-      <h2 id="reject-modal-title">Reject Request</h2>
-
-      <p>
-        Please provide a reason for rejecting
-        request {request.control_number}.
-      </p>
-
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setActionError("");
-
-          if (!rejectReason.trim() || !onReject) return;
-
-          try {
-            await onReject(request.id, rejectReason.trim());
-            setShowRejectModal(false);
-          } catch (err) {
-            setActionError(err.message);
-          }
-        }}
-      >
-        <label htmlFor="reject-reason">
-          Rejection Reason
-        </label>
-
-        <textarea
-          id="reject-reason"
-          value={rejectReason}
-          onChange={(e) => setRejectReason(e.target.value)}
-          placeholder="Enter the reason for rejection..."
-          rows={4}
-          required
-        />
-
-        {actionError && (
-          <p role="alert">{actionError}</p>
-        )}
-
-        <div className="reject-modal-actions">
           <button
             type="button"
-            disabled={saving}
-            onClick={() => setShowRejectModal(false)}
+            className="details-approve-btn"
+            disabled={saving || !onApprove}
+            onClick={handleApprove}
           >
-            Cancel
+            {saving ? "Processing..." : "Approve Request"}
           </button>
 
-          <button
-            type="submit"
-            className="details-reject-btn"
-            disabled={saving || !rejectReason.trim()}
-          >
-            Confirm Rejection
-          </button>
+          {actionError && !showRejectModal && (
+            <p role="alert">{actionError}</p>
+          )}
         </div>
-      </form>
-    </div>
-  </div>
-)}
+      )}
+
+      {showRejectModal && (
+        <div className="reject-overlay">
+          <div
+            className="reject-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reject-modal-title"
+          >
+            <h2 id="reject-modal-title">Reject Request</h2>
+
+            <p>
+              Please provide a reason for rejecting request{" "}
+              {request.control_number}.
+            </p>
+
+            <form onSubmit={handleReject}>
+              <label htmlFor="reject-reason">Rejection Reason</label>
+
+              <textarea
+                id="reject-reason"
+                value={rejectReason}
+                onChange={(event) => setRejectReason(event.target.value)}
+                placeholder="Enter the reason for rejection..."
+                rows={4}
+                required
+              />
+
+              {actionError && <p role="alert">{actionError}</p>}
+
+              <div className="reject-modal-actions">
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => setShowRejectModal(false)}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="details-reject-btn"
+                  disabled={saving || !rejectReason.trim()}
+                >
+                  {saving ? "Processing..." : "Confirm Rejection"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
