@@ -3,10 +3,18 @@ import Header from './components/dahsboard/Header'
 import Dashboard from './components/dahsboard/Dashboard'
 import SarfForm from './components/sarf/SarfForm'
 import RequesterLogin from './components/login/RequesterLogin'
+import RequestView from './components/dahsboard/RequestView'
 import { getCurrentRequester } from './api/auth'
 
 // Tiny hash router: "#/" = dashboard, "#/sarf" = the form.
-const readRoute = () => (window.location.hash.startsWith('#/sarf') ? 'sarf' : 'dashboard')
+const readRoute = () => {
+  const hash = window.location.hash
+
+  if (hash.startsWith('#/sarf')) return 'sarf'
+  if (hash.startsWith('#/requests/')) return 'request'
+
+  return 'dashboard'
+}
 
 
 export default function App() {
@@ -29,13 +37,26 @@ export default function App() {
   }, [])
 
     if (checkingSession) return <p>Checking login...</p>
-    //if (!requester) return <RequesterLogin onLogin={setRequester} />
+    if (!requester) return <RequesterLogin onLogin={setRequester} />
     
   return (
     <>
       <Header route={route} />
-      <main>{route === 'sarf' ? <SarfForm /> : <Dashboard />}</main>
-      <footer>UC-AR-FORM-36 · March 29, 2021 · Rev.01 · Online prototype for academic project use</footer>
+      <main>
+  {route === 'sarf' ? (
+    <SarfForm />
+  ) : route === 'request' ? (
+    <RequestView
+      id={decodeURIComponent(
+        (window.location.hash.split('/')[2] || '').split('?')[0]
+      )}
+      autoPrint={window.location.hash.includes('?print')}
+    />
+  ) : (
+    <Dashboard />
+  )}
+</main>
+      <footer>Online prototype for academic project use only</footer>
     </>
 
   )

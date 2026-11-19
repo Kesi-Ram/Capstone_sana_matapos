@@ -1143,29 +1143,47 @@ footer {
 }
 
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 6mm;
+  }
+
   .no-print {
     display: none !important;
   }
 
   .print-only {
-    display: block;
+    display: block !important;
   }
 
-  .print-title {
-    margin-bottom: 8px;
-    text-align: center;
-    font-size: 12px;
+  .detail-sheet {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 8pt !important;
+    line-height: 1.1 !important;
   }
 
-  .print-title strong {
-    font-size: 15px;
+  .cols {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 5px !important;
   }
 
-  .detail-row {
-    padding: 3px 0;
+  .box {
+    margin: 0 0 5px !important;
+    padding: 5px !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
-  .table-wrap {
-    overflow: visible;
+  .page-break {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  table {
+    font-size: 7pt !important;
   }
 }

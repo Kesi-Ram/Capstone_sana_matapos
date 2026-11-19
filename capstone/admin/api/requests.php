@@ -38,7 +38,6 @@ $stmt = $pdo->query("
         s.created_at,
         s.decided_at,
         s.reject_reason,
-        s.scan_path,
 
         r.name_of_organizer_office_college AS organization,
         r.name_of_program,

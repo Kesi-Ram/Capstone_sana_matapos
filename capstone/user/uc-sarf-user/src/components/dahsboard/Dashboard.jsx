@@ -1,9 +1,37 @@
-import { useState } from 'react'
-import { loadRequests } from '../../utils/storage'
+import { useEffect, useState } from 'react'
 import Facilities from './Facilities'
 
+const API_URL = 'http://localhost/capstone_sana_matapos/capstone/admin/api'
+
 export default function Dashboard() {
-  const [requests] = useState(loadRequests)
+  const [requests, setRequests] = useState([])
+  const [requestsLoading, setRequestsLoading] = useState(true)
+  const [requestsError, setRequestsError] = useState('')
+
+  useEffect(() => {
+    async function fetchMyRequests() {
+      try {
+        const response = await fetch(`${API_URL}/my-requests.php`, {
+          credentials: 'include',
+        })
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(result.message || 'Could not load your requests.')
+        }
+
+        setRequests(result.requests || [])
+      } catch (error) {
+        setRequestsError(error.message)
+      } finally {
+        setRequestsLoading(false)
+      }
+    }
+
+    fetchMyRequests()
+  }, [])
+
+  
 
   return (
     <>
@@ -32,7 +60,7 @@ export default function Dashboard() {
                   <th>Venue</th>
                   <th>Schedule</th>
                   <th>Status</th>
-                  <th>Current Step</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -43,7 +71,9 @@ export default function Dashboard() {
                     <td>{r.venue}</td>
                     <td>{r.date}</td>
                     <td><span className="status-pill">{r.status}</span></td>
-                    <td>{r.stage}</td>
+                    <td>
+                      <a className="btn btn-small" href={`#/requests/${encodeURIComponent(r.id)}`}>View</a>
+                    </td>
                   </tr>
                 ))}
               </tbody>
