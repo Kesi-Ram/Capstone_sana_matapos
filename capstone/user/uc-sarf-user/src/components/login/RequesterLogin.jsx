@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { loginRequester, registerRequester } from '../../api/auth'
+import './RequesterLogin.css'
 
 export default function RequesterLogin({ onLogin }) {
   const [isRegistering, setIsRegistering] = useState(false)
@@ -31,7 +32,7 @@ export default function RequesterLogin({ onLogin }) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="requester-auth" onSubmit={handleSubmit}>
       <h1>{isRegistering ? 'Create Requester Account' : 'Requester Login'}</h1>
 
       {isRegistering && (

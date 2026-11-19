@@ -17,7 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit;
 }
 
-require_once __DIR__ . "/../db.php";
+require_once __DIR__ . "/db.php";
 
 session_set_cookie_params([
     "lifetime" => 0,

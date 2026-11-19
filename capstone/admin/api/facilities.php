@@ -4,7 +4,7 @@ header("Access-Control-Allow-Origin: http://localhost:5173");
 header("Content-Type: application/json; charset=UTF-8");
 
 // This assumes db.php is one folder above api/.
-require_once __DIR__ . "/../db.php";
+require_once __DIR__ . "/db.php";
 
 try {
     // Get the active facilities and the details the user-side list displays.

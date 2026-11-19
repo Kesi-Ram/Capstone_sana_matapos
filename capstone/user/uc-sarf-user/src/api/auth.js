@@ -28,3 +28,19 @@ export async function getCurrentRequester() {
 
   return await response.json()
 }
+export async function registerRequester(name, email, password) {
+  const response = await fetch(`${API_URL}/register-requester.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ name, email, password }),
+  })
+
+  const result = await response.json()
+
+  if (!response.ok) {
+    throw new Error(result.message || 'Registration failed')
+  }
+
+  return result
+}

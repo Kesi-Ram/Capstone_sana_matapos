@@ -29,7 +29,7 @@ export default function App() {
   }, [])
 
     if (checkingSession) return <p>Checking login...</p>
-    if (!requester) return <RequesterLogin onLogin={setRequester} />
+    //if (!requester) return <RequesterLogin onLogin={setRequester} />
     
   return (
     <>
