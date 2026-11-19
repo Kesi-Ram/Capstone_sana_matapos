@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react'
-import Signin from './components/SigninPage/signin'
+import SigninPage from './components/SignInPage/signin'
 import Dashboard from './components/main/dashboard/dashboard'
 import Requests from './components/main/requests/request'
 import Sidebar from './components/main/sidebar/sidebar'
@@ -66,7 +66,7 @@ function App() {
 
   // Display the sign-in page if there is no user
   if (!user) {
-    return <Signin onLogin={setUser} />
+    return <SigninPage onLogin={setUser} />
   }
 
 
