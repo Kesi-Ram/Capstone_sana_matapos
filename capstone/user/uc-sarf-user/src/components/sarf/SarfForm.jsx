@@ -8,8 +8,8 @@ import {
   INSURANCE_COLUMNS, INSURANCE_ROWS,
 } from '../../data/sarfOptions'
 import { rangeConflicts } from '../../utils/schedule'
-import { clearDraft, loadDraft, saveDraft, saveRequest } from '../../utils/storage'
-
+import { clearDraft, loadDraft, saveDraft } from '../../utils/storage'
+import { submitSarf } from '../../api/requests'
 const EMPTY_FORM = {
   facilityId:'', participants: [], checklist: [], bmo: [], lmo: [], itss: [], admin: [], charges: [],
 }
@@ -118,13 +118,11 @@ useEffect(() => {
   }
 
   function handleSaveDraft() {
-    const ok = saveDraft(values)
-    show(ok ? 'ok' : 'error', ok
-      ? 'Draft saved in this browser. You can continue on this device.'
-      : 'Could not save the draft. Check that browser storage is enabled.')
-  }
+  saveDraft(values)
+  show('ok', 'Draft saved.')
+}
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault() // native `required` checks have already passed at this point
     if (!values.start || !values.end) {
       show('error', 'Select the activity start and end date/time.')
@@ -148,24 +146,18 @@ useEffect(() => {
       return
     }
 
-    const selectedFacility = facilities.find((facility) => String(facility.id) === String(values.facilityId))
-    
-    const id = `SARF-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`
-    saveRequest({
-      id,
-      title: values.title,
-      venue: selectedFacility ? selectedFacility.name : '',
-      date: new Date(values.start).toLocaleString(),
-      status: 'Pending',
-      stage: 'President/Organizer',
-      data: values,
-      submittedAt: new Date().toISOString(),
-    })
-    clearDraft()
-    setBookings(buildBookings(loadRequests()))
-    setValues(EMPTY_FORM)
-    setFormKey((k) => k + 1)
-    show('ok', `SARF submitted in this browser prototype. Control No.: ${id}. This does not yet send the request to UC signatories.`)
+
+try {
+  const result = await submitSarf(values)
+
+  clearDraft()
+  setValues(EMPTY_FORM)
+  setFormKey((key) => key + 1)
+
+  show('ok', `SARF submitted. Control No.: ${result.controlNumber}`)
+} catch (error) {
+  show('error', error.message)
+}
   }
 
   return (
