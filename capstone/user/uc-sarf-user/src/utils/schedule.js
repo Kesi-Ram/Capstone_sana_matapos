@@ -2,7 +2,7 @@ import { SEED_BOOKINGS } from '../data/bookings'
 
 export const SLOT_MINUTES = 30
 // Set to 14 to enforce the form's "two weeks prior" rule in the calendar.
-export const MIN_LEAD_DAYS = 0
+export const MIN_LEAD_DAYS = 14
 
 // Bookable 30-minute slots, 8:00AM–5:00PM, skipping the 12:00–1:00PM lunch break.
 export const DAY_SLOTS = (() => {

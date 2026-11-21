@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import Facilities from './Facilities'
+import { logoutRequester } from '../../api/auth'
 
 const API_URL = 'http://localhost/capstone_sana_matapos/capstone/admin/api'
 
-export default function Dashboard() {
+export default function Dashboard({ onLogout }) {
   const [requests, setRequests] = useState([])
   const [requestsLoading, setRequestsLoading] = useState(true)
   const [requestsError, setRequestsError] = useState('')
@@ -30,6 +31,15 @@ export default function Dashboard() {
 
     fetchMyRequests()
   }, [])
+
+    async function logout() {
+    try {
+      await logoutRequester()
+      onLogout()
+    } catch (error) {
+      alert(error.message)
+    }
+  }
 
   
 
@@ -83,6 +93,8 @@ export default function Dashboard() {
       </section>
 
       <Facilities />
+
+      <button onClick={logout} className="logout-btn" >Log Out</button>
 
       <p className="notice">
         Demo only. Requests are saved in local browser storage. Real user accounts, routing, PDF

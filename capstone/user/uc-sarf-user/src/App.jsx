@@ -36,6 +36,11 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onChange)
   }, [])
 
+  function handleLogout() {
+    setRequester(null)
+    window.location.hash = '#/'
+  }
+
     if (checkingSession) return <p>Checking login...</p>
     if (!requester) return <RequesterLogin onLogin={setRequester} />
     
@@ -53,7 +58,7 @@ export default function App() {
       autoPrint={window.location.hash.includes('?print')}
     />
   ) : (
-    <Dashboard />
+    <Dashboard onLogout={handleLogout}/>
   )}
 </main>
       <footer>Online prototype for academic project use only</footer>

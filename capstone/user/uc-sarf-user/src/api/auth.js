@@ -44,3 +44,21 @@ export async function registerRequester(name, email, password) {
 
   return result
 }
+
+// Log out the admin
+export async function logoutRequester() {
+
+  let response;
+
+  try {
+    response = await fetch(`${API_URL}/logout-requester.php`, {
+      method: "POST"
+    });
+  } catch (error) {
+    throw new Error("Can't reach the server.");
+  }
+
+  if (!response.ok) {
+    throw new Error("Logout failed.");
+  }
+}

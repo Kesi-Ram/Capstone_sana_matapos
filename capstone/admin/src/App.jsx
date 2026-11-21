@@ -4,6 +4,7 @@ import SigninPage from './components/SignInPage/signin'
 import Dashboard from './components/main/dashboard/dashboard'
 import Requests from './components/main/requests/request'
 import Sidebar from './components/main/sidebar/sidebar'
+import Schedules from './components/main/scheduleview/schedules'
 import { getCurrentUser, signOut } from './api/auth'
 import './App.css'
 
@@ -87,6 +88,8 @@ function App() {
   } else if (activePage === "requests") {
     pageContent = <Requests />
 
+  } else if (activePage === "schedule") {
+    pageContent = <Schedules /> 
   } else {
     pageContent = (
       <div className="page-placeholder">
