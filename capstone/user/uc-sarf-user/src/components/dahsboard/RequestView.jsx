@@ -3,7 +3,7 @@ import {
   BMO, LMO, ITSS, ADMIN, CHARGES, INSURANCE_COLUMNS, INSURANCE_ROWS,
 } from '../../data/sarfOptions'
 
-const API_URL = "/admin/api";
+const API_URL = "/api";
 
 // ---------- helpers ----------
 const fmtDateTime = (v) =>
