@@ -56,7 +56,11 @@ $requiredFields = [
 foreach ($requiredFields as $field) {
     if (empty($values[$field])) {
         http_response_code(400);
-        echo json_encode(["message" => "A required field is missing."]);
+
+        echo json_encode([
+            "message" => "Missing required field: " . $field
+        ]);
+
         exit;
     }
 }
