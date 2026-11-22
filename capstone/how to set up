@@ -6,7 +6,10 @@ import schema
 
 open and start xampp
 
-run server - C:\xampp\php\php.exe -S localhost:8000 -t .\admin\api
+run server - 
+
+windows - C:\xampp\php\php.exe -S localhost:8000 -t .\admin\api
+mac - /Applications/XAMPP/xamppfiles/bin/php -S 127.0.0.1:8000 -t ./admin/api
 
 npm run dev on admin - cd admin, npm run dev
 
