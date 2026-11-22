@@ -1,0 +1,510 @@
+# FMO Reservation System — Error Troubleshooting Guide
+
+## 1. 502 Bad Gateway
+
+**Error:**
+```text
+502 Bad Gateway
+```
+
+**Cause:** React/Vite cannot communicate with the PHP backend on port 8000. The PHP server may have stopped or may not be reachable.
+
+**Solution:**
+
+Start PHP from the `capstone` root directory.
+
+Windows (PowerShell):
+```powershell
+C:\xampp\php\php.exe -S 127.0.0.1:8000 -t .\admin\api
+```
+
+MacBook:
+```bash
+/Applications/XAMPP/xamppfiles/bin/php -S 127.0.0.1:8000 -t ./admin/api
+```
+
+Keep the terminal running.
+
+To test whether PHP is reachable:
+
+Windows:
+```powershell
+curl.exe -i http://127.0.0.1:8000/me-requester.php
+```
+
+MacBook:
+```bash
+curl -i http://127.0.0.1:8000/me-requester.php
+```
+
+An HTTP response, even `401 Unauthorized`, means PHP is reachable.
+
+If PHP is reachable but Vite still returns 502, check `vite.config.js` and restart Vite.
+
+---
+
+## 2. 500 Internal Server Error — Database Connection Failed
+
+**Errors:**
+```text
+500 Internal Server Error
+Database connection failed.
+```
+
+**Cause:** MySQL was not running in XAMPP.
+
+**Solution:**
+
+1. Open XAMPP Control Panel.
+2. Start MySQL.
+3. Confirm MySQL is running.
+4. Refresh the website.
+5. Try logging in again.
+
+If the error continues, check the database connection settings in:
+
+```text
+admin/api/db.php
+```
+
+Verify the database name, username, password, host, and port.
+
+---
+
+## 3. Unexpected End of JSON Input
+
+**Error:**
+```text
+Unexpected end of JSON input
+```
+
+**Cause:** React expected JSON from PHP but received an empty or invalid response.
+
+In our case, this happened alongside a 502 error.
+
+**Solution:**
+
+1. Open Developer Tools → Network.
+2. Find the failed PHP request.
+3. Check its HTTP status and Response.
+4. If it shows 502, check the PHP server.
+5. If it shows 500, check PHP errors and MySQL.
+
+This error is often a symptom of another problem.
+
+---
+
+## 4. 401 Unauthorized / Please Log In First
+
+**Errors:**
+```text
+401 Unauthorized
+{"message":"Please log in first."}
+```
+
+**Cause:** The SARF submission endpoint could not find the requester's PHP session.
+
+In our case, `requests.js` was still using the old Windows-specific API URL while the login functions had already switched to `/api`.
+
+**Solution:**
+
+In:
+
+```text
+user/uc-sarf-user/src/api/requests.js
+```
+
+Use:
+
+```javascript
+const API_URL = '/api'
+
+export async function submitSarf(values) {
+  const response = await fetch(`${API_URL}/submit-request.php`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    credentials: 'include',
+    body: JSON.stringify({ values }),
+  })
+
+  const result = await response.json()
+
+  if (!response.ok) {
+    throw new Error(result.message || 'Could not submit the SARF.')
+  }
+
+  return result
+}
+```
+
+Make sure the requester login and SARF submission both use the same `/api` proxy.
+
+Also verify that `login-requester.php`, `me-requester.php`, and `submit-request.php` use the same requester session key:
+
+```php
+$_SESSION["requester_id"]
+```
+
+Do not replace it with the admin session key.
+
+---
+
+## 5. Could Not Save the Request
+
+**Error:**
+```text
+Could not save the request.
+```
+
+**Cause:** PHP encountered an error while saving the SARF to MySQL.
+
+**Solution:**
+
+Check the PHP error log for the real database error.
+
+For local debugging only, you can temporarily change the `catch` block in `submit-request.php` to:
+
+```php
+catch (Throwable $error) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+
+    error_log($error->getMessage());
+
+    http_response_code(500);
+    echo json_encode([
+        "message" => $error->getMessage()
+    ]);
+}
+```
+
+After identifying and fixing the problem, restore the generic error message:
+
+```php
+"message" => "Could not save the request."
+```
+
+Never expose raw database errors in production.
+
+---
+
+## 6. SQLSTATE 1265 — Data Truncated
+
+**Error:**
+```text
+SQLSTATE[01000]: Warning: 1265
+Data truncated for column 'participants_type' at row 1
+```
+
+**Cause:** The `participants_type` column could not accept the data sent by the SARF form.
+
+The form allows multiple participant types, but the column's original definition was incompatible with the submitted value.
+
+**Solution:**
+
+Open phpMyAdmin → select the database → `sarf_req` → Structure.
+
+For our form, we changed `participants_type` to a text-compatible column.
+
+Example SQL, if the column should be nullable:
+
+```sql
+ALTER TABLE sarf_req
+MODIFY COLUMN participants_type VARCHAR(255) NULL;
+```
+
+If the column must remain required:
+
+```sql
+ALTER TABLE sarf_req
+MODIFY COLUMN participants_type VARCHAR(255) NOT NULL;
+```
+
+Choose the version that matches your database requirements.
+
+Check that Windows and MacBook use compatible database schemas.
+
+---
+
+## 7. Cannot Find Native Binding — Rolldown
+
+**Errors:**
+```text
+Error: Cannot find native binding.
+Cannot find module '@rolldown/binding-win32-x64-msvc'
+Cannot find module '@rolldown/binding-wasm32-wasi'
+```
+
+**Cause:** Required platform-specific npm dependencies were missing after switching between Windows and macOS.
+
+**Solution:**
+
+In the affected React project's directory, run:
+
+Windows PowerShell:
+```powershell
+Remove-Item -Recurse -Force node_modules
+npm install
+npm run dev
+```
+
+MacBook:
+```bash
+rm -rf node_modules
+npm install
+npm run dev
+```
+
+If reinstalling doesn't solve the problem, a fresh lockfile may be needed.
+
+Windows:
+```powershell
+Remove-Item -Recurse -Force node_modules
+Remove-Item -Force package-lock.json
+npm install
+npm run dev
+```
+
+MacBook:
+```bash
+rm -rf node_modules package-lock.json
+npm install
+npm run dev
+```
+
+Deleting `package-lock.json` can change dependency versions. Review the regenerated file before committing it.
+
+---
+
+## 8. Missing .gitignore / node_modules Tracked by Git
+
+**Problem:** Dependencies may accidentally be committed and transferred between operating systems.
+
+**Solution:**
+
+Create `.gitignore` inside the requester project's root directory:
+
+```text
+user/uc-sarf-user/.gitignore
+```
+
+Add:
+
+```gitignore
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+Thumbs.db
+```
+
+Check whether Git already tracks `node_modules`:
+
+```bash
+git ls-files node_modules
+```
+
+If files appear, stop tracking them:
+
+```bash
+git rm -r --cached node_modules
+```
+
+This removes them from Git tracking without deleting the local files.
+
+Keep `package.json` and normally keep `package-lock.json` in Git.
+
+---
+
+## 9. #1046 — No Database Selected
+
+**Error:**
+```text
+#1046 - No database selected
+```
+
+**Cause:** MySQL didn't know which database should receive the imported SQL tables.
+
+**Solution:**
+
+1. Open phpMyAdmin.
+2. Create or select the intended database.
+3. Click the database name in the sidebar.
+4. Select Import.
+5. Import your SQL file.
+
+Ensure `db.php` connects to the same database.
+
+---
+
+## 10. Invalid Response From Server / 404 Not Found
+
+**Errors:**
+```text
+Invalid response from server
+404 Not Found
+```
+
+**Cause:** PHP endpoints were being requested from the wrong server directory or route.
+
+This happened while configuring the PHP development server and Vite proxy on the MacBook.
+
+**Solution:**
+
+Start the backend from the `capstone` root directory:
+
+```bash
+php -S 127.0.0.1:8000 -t ./admin/api
+```
+
+On MacBook, use the full XAMPP PHP path if necessary.
+
+In both frontend Vite configurations:
+
+```javascript
+server: {
+  proxy: {
+    '/api': {
+      target: 'http://127.0.0.1:8000',
+      changeOrigin: true,
+      rewrite: (path) => path.replace(/^\/api/, '')
+    }
+  }
+}
+```
+
+Restart Vite after changing its configuration.
+
+---
+
+## 11. Admin Session Not Found
+
+**Error:**
+```text
+Admin session not found
+```
+
+**Cause:** The admin endpoint could not retrieve the expected session information.
+
+**Solution:**
+
+Check session initialization in the admin PHP files.
+
+In our earlier setup, loading `db.php` before starting the session resolved the problem:
+
+```php
+require_once __DIR__ . "/db.php";
+session_start();
+```
+
+This order matters if `db.php` contains session configuration.
+
+Verify that the admin login sets the same session variable the endpoint checks:
+
+```php
+$_SESSION["user_id"]
+```
+
+Do not confuse admin sessions with requester sessions.
+
+---
+
+## 12. SARF Approval — Unknown Column / Incorrect Database JOIN
+
+**Problem:** Approval processing attempted to retrieve a field from the wrong database table.
+
+**Cause:** `facility_id` belongs to `sarf_req`, not directly to `sarf`.
+
+**Solution:**
+
+Retrieve the SARF and its request details using a JOIN:
+
+```sql
+SELECT
+    s.id,
+    s.status,
+    r.facility_id,
+    r.name_of_program,
+    r.start_datetime,
+    r.end_datetime
+FROM sarf AS s
+JOIN sarf_req AS r ON r.sarf_id = s.id
+WHERE s.id = ?
+```
+
+This lets the approval endpoint retrieve the correct facility and schedule details before creating a reservation.
+
+---
+
+# Quick Startup Checklist
+
+Before running the capstone on either computer:
+
+- [ ] Start MySQL in XAMPP.
+- [ ] Start the PHP backend on port 8000.
+- [ ] Start the admin React frontend using `npm run dev`.
+- [ ] Start the requester React frontend using `npm run dev`.
+- [ ] Confirm Vite is using the correct proxy.
+- [ ] Check requester and admin login.
+- [ ] Check that SARF requests and schedules load.
+
+## Startup Commands
+
+**Windows — PHP backend** (from capstone root):
+```powershell
+C:\xampp\php\php.exe -S 127.0.0.1:8000 -t .\admin\api
+```
+
+**MacBook — PHP backend** (from capstone root):
+```bash
+/Applications/XAMPP/xamppfiles/bin/php -S 127.0.0.1:8000 -t ./admin/api
+```
+
+**React frontend** (from each frontend project folder):
+```bash
+npm run dev
+```
+
+**Backend connection test:**
+```bash
+curl -i http://127.0.0.1:8000/me-requester.php
+```
+
+A JSON response confirms that PHP is reachable, even if the request returns HTTP 401 because you aren't authenticated.
+
+---
+
+# HTTP Error Code Cheat Sheet
+
+| Status | Meaning | What to check |
+|---|---|---|
+| 200 | OK | Request succeeded |
+| 201 | Created | Record saved successfully |
+| 400 | Bad Request | Form data |
+| 401 | Unauthorized | Login session |
+| 403 | Forbidden | User permissions |
+| 404 | Not Found | API URL / PHP file |
+| 405 | Method Not Allowed | GET versus POST |
+| 409 | Conflict | Existing reservation |
+| 500 | Internal Server Error | PHP / database / application error |
+| 502 | Bad Gateway | PHP backend / Vite proxy connection |
+
+## Golden Rule
+
+**Check the browser's Network tab before changing code.**
+
+If login or submission suddenly stops working:
+
+1. Check whether MySQL is running.
+2. Check whether PHP is reachable.
+3. Check the failed request's HTTP status.
+4. Read the response message.
+5. Fix the actual cause rather than randomly modifying working code.
+
+Most of our recent problems were caused by local development setup differences between
