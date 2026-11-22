@@ -1,6 +1,4 @@
-const API_URL = 'http://localhost/capstone_sana_matapos/capstone/admin/api'
-
-
+const API_URL = '/api'
 
 export async function loginRequester(email, password) {
   const response = await fetch(`${API_URL}/login-requester.php`, {

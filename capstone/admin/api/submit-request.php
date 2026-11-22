@@ -15,11 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
-    http_response_code(204);
-    exit;
-}
-
 require_once __DIR__ . "/db.php";
 session_start();
 
@@ -151,7 +146,9 @@ try {
     }
 
     error_log($error->getMessage());
+
     http_response_code(500);
-    echo json_encode(["message" => "Could not save the request."]);
+    echo json_encode([
+        "message" => $error->getMessage()
+    ]);
 }
-    
