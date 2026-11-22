@@ -2,7 +2,7 @@
    TOKENS & BASE
    ========================================================== */
 :root {
-  --green: #049948;
+  --green: #4F7D5C;
   --green-dark: #037a3a;
   --green-soft: #e6f7ee;
   --paper: #f2f3f5;
@@ -1186,4 +1186,40 @@ footer {
   table {
     font-size: 7pt !important;
   }
+}
+
+.logout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 11px 22px;
+  background-color: #fff;
+  color: #dc2626;
+
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  background-color: #fef2f2;
+  border-color: #dc2626;
+  transform: translateY(-1px);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+}
+
+.logout-btn:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 3px;
 }

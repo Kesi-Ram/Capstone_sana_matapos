@@ -27,6 +27,9 @@ body,
   padding: 32px;
   color: #1f2a24;
 }
+body {
+  font-family: 'Inter', sans-serif;
+}
 
 
 
