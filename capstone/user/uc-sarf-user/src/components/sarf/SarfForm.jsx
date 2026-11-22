@@ -20,7 +20,7 @@ export default function SarfForm() {
   const [message, setMessage] = useState(null)
   const [formKey, setFormKey] = useState(0) // bump to also clear the file input
 
-  const API_BASE_URL = 'http://localhost/capstone_sana_matapos/capstone/admin/api'
+  const API_BASE_URL = '/admin/api'
 
   const [facilities, setFacilities] = useState([])
   const [facilitiesLoading, setFacilitiesLoading] = useState(true)
