@@ -49,12 +49,14 @@ function Requests() {
       activeTab === "all" || request.status === activeTab;
 
     const searchText = [
-      request.control_number,
-      request.organization,
-      request.name_of_program,
-      request.nature_of_activity,
-      request.facility,
-    ]
+    request.id,
+    `REQ-${String(request.id).padStart(6, "0")}`,
+    request.control_number,
+    request.organization,
+    request.name_of_program,
+    request.nature_of_activity,
+    request.facility,
+  ] 
       .join(" ")
       .toLowerCase();
 
@@ -79,50 +81,71 @@ function Requests() {
     });
   }
 
-  async function updateRequestStatus(id, newStatus, reason = "") {
+
+async function updateRequestStatus(id, newStatus, reason = "", controlNumber = "") {
+  console.log("Requests.jsx received:", {
+  id,
+  newStatus,
+  reason,
+  controlNumber
+});
   setSaving(true);
 
   try {
     const response = await fetch("/api/update_request_status.php", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       credentials: "include",
       body: JSON.stringify({
         id: id,
         status: newStatus,
         reason: reason,
-      }),
+        controlNumber: controlNumber
+      })
     });
 
     const result = await response.json();
 
     if (!response.ok) {
       throw new Error(result.message || "Could not update the request.");
-
-      
     }
 
-    const updatedFields = { status: newStatus };
+    const updatedFields = {
+      status: newStatus
+    };
+
+    if (newStatus === "approved") {
+      updatedFields.control_number = controlNumber;
+      updatedFields.reject_reason = null;
+    }
 
     if (newStatus === "rejected") {
-    updatedFields.reject_reason = reason;
-}
+      updatedFields.reject_reason = reason;
+    }
 
     setRequests((currentRequests) =>
       currentRequests.map((item) =>
-        item.id === id ? { ...item, status: newStatus } : item
+        String(item.id) === String(id)
+          ? { ...item, ...updatedFields }
+          : item
       )
     );
 
     setSelectedRequest((currentRequest) =>
-      currentRequest
-        ? { ...currentRequest, status: newStatus }
+      currentRequest && String(currentRequest.id) === String(id)
+        ? { ...currentRequest, ...updatedFields }
         : currentRequest
     );
+
+    return result;
+
   } finally {
     setSaving(false);
   }
 }
+
   if (selectedRequest) {
     return (
       <RequestDetails
@@ -144,7 +167,16 @@ function Requests() {
     );
   }}
 
-  onApprove={(id) => updateRequestStatus(id, "approved")}
+onApprove={(id, controlNumber) => {
+  console.log("Approval callback received:", controlNumber);
+
+  return updateRequestStatus(
+    id,
+    "approved",
+    "",
+    controlNumber
+  );
+}}
   onReject={(id, reason) =>
   updateRequestStatus(id, "rejected", reason)
 }
@@ -155,6 +187,14 @@ saving={saving}
 
   if (loading) return <p>Loading requests...</p>;
   if (error) return <p>{error}</p>;
+
+function formatReference(request) {
+  if (request.status === "approved" && request.control_number) {
+    return request.control_number
+  }
+
+  return `REQ-${String(request.id).padStart(6, "0")}`
+}
 
   return (
     <div className="requests-page">
@@ -195,7 +235,7 @@ saving={saving}
         <table className="requests-list-table">
           <thead>
             <tr>
-              <th>Control No.</th>
+              <th>Reference ID</th>
               <th>Organization</th>
               <th>Activity</th>
               <th>Facility</th>
@@ -208,7 +248,7 @@ saving={saving}
           <tbody>
             {filteredRequests.map((request) => (
               <tr key={request.id}>
-                <td>{request.control_number}</td>
+                <td>{formatReference(request)}</td>
                 <td>{request.organization}</td>
                 <td>{request.name_of_program}</td>
                 <td>{request.facility}</td>

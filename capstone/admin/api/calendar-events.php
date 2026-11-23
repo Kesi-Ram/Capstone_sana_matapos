@@ -35,28 +35,48 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $events = [];
 
+$facilityColors = [
+    1 => "#3788d8", // Blue
+    2 => "#16a34a", // Green
+    3 => "#9333ea", // Purple
+    4 => "#ea580c", // Orange
+    5 => "#eae60c", // yilo
+];
+
 // Convert MySQL records into FullCalendar events.
 foreach ($rows as $row) {
 
-    $events[] = [
-        "id" => $row["id"],
+    
+$facilityId = (int)$row["facility_id"];
 
-        // Event title displayed on the calendar.
-        "title" => $row["event_title"],
+// Find the color assigned to this facility.
+// Use gray if the facility ID isn't in the list.
+$eventColor = $facilityColors[$facilityId] ?? "#64748b";
 
-        // FullCalendar uses these to position the event.
-        "start" => str_replace(" ", "T", $row["start_datetime"]),
-        "end" => str_replace(" ", "T", $row["end_datetime"]),
+$events[] = [
+    "id" => $row["id"],
 
-        // Additional information for displaying event details.
-        "extendedProps" => [
-            "sarf_id" => $row["sarf_id"],
-            "facility_id" => $row["facility_id"],
-            "facility_name" => $row["facility_name"],
-            "status" => $row["status"],
-            "control_number" => $row["control_number"]
-        ]
-    ];
+    // Event title displayed on the calendar
+    "title" => $row["event_title"],
+
+    // Start and end date/time
+    "start" => str_replace(" ", "T", $row["start_datetime"]),
+    "end" => str_replace(" ", "T", $row["end_datetime"]),
+
+    // NEW: Color based on the selected facility
+    "color" => $eventColor,
+    "contrastColor" => "#ffffff",
+
+    // Additional event information
+    "extendedProps" => [
+        "sarf_id" => $row["sarf_id"],
+        "facility_id" => $row["facility_id"],
+        "facility_name" => $row["facility_name"],
+        "status" => $row["status"],
+        "control_number" => $row["control_number"]
+    ]
+];
+
 }
 
 echo json_encode($events);

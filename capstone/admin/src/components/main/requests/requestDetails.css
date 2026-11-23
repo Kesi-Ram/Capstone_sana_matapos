@@ -97,3 +97,40 @@
   }
 }
 
+
+/* SARF Control Number input for FMO approval */
+
+.control-number-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 420px;
+}
+
+.control-number-field label {
+  font-weight: 600;
+}
+
+.control-number-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.control-number-field input:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+.control-number-field small {
+  color: #666;
+}
+
+.required-mark {
+  color: #dc2626;
+}
+
+

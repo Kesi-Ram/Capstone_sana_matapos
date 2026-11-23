@@ -33,7 +33,8 @@ if (!isset($_SESSION["requester_id"])) {
 
 $stmt = $pdo->prepare("
     SELECT
-        s.control_number AS id,
+        s.id AS id,
+        s.control_number,
         r.name_of_program AS title,
         f.name AS venue,
         r.start_datetime AS date,

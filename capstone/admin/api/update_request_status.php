@@ -21,23 +21,55 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit;
 }
 
-// Read the request sent by React
+// Read the data sent by React
 $input = json_decode(file_get_contents("php://input"), true);
 
 $id = (int)($input["id"] ?? 0);
 $status = $input["status"] ?? "";
 $reason = trim($input["reason"] ?? "");
 
-// Validate the request
+// NEW: Official SARF Control Number entered by the admin
+$controlNumber = $input["controlNumber"] ?? "";
+
+if (!is_string($controlNumber)) {
+    http_response_code(400);
+    echo json_encode(["message" => "Invalid SARF Control Number."]);
+    exit;
+}
+
+$controlNumber = trim($controlNumber);
+
+// Validate request ID and decision
 if ($id <= 0 || !in_array($status, ["approved", "rejected"], true)) {
     http_response_code(400);
     echo json_encode(["message" => "Invalid request or decision."]);
     exit;
 }
 
+// NEW: Control number is required ONLY when approving
+if ($status === "approved" && $controlNumber === "") {
+    http_response_code(400);
+    echo json_encode([
+        "message" => "Please enter the SARF Control Number before approving."
+    ]);
+    exit;
+}
+
+// Keep the control number within the database column limit
+if ($status === "approved" && strlen($controlNumber) > 100) {
+    http_response_code(400);
+    echo json_encode([
+        "message" => "SARF Control Number is too long."
+    ]);
+    exit;
+}
+
+// Rejection still requires a reason, not a control number
 if ($status === "rejected" && $reason === "") {
     http_response_code(400);
-    echo json_encode(["message" => "Please provide a rejection reason."]);
+    echo json_encode([
+        "message" => "Please provide a rejection reason."
+    ]);
     exit;
 }
 
@@ -46,7 +78,7 @@ $lockAcquired = false;
 
 try {
 
-    // STEP 1: Find the SARF request
+    // STEP 1: Find the SARF request and its details
     $stmt = $pdo->prepare("
         SELECT
             s.id,
@@ -70,8 +102,7 @@ try {
         );
     }
 
-    // STEP 2: If approving, lock this facility's scheduling process
-    // This prevents two admins from booking overlapping events at once.
+    // STEP 2: Lock the facility scheduling process when approving
     if ($status === "approved") {
 
         $facilityId = (int)$request["facility_id"];
@@ -98,7 +129,7 @@ try {
     // STEP 3: Start database transaction
     $pdo->beginTransaction();
 
-    // Lock the SARF record while processing it
+    // Lock the SARF record while processing
     $stmt = $pdo->prepare("
         SELECT status
         FROM sarf
@@ -118,7 +149,6 @@ try {
 
     if ($status === "approved") {
 
-        // Check if the requested dates are valid
         $start = $request["start_datetime"];
         $end = $request["end_datetime"];
 
@@ -129,7 +159,7 @@ try {
             );
         }
 
-        // STEP 4: Check for conflicting schedules
+        // STEP 4: Check for conflicting reservations
         $stmt = $pdo->prepare("
             SELECT id
             FROM schedules
@@ -146,32 +176,71 @@ try {
             $start
         ]);
 
-        $conflict = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($conflict) {
+        if ($stmt->fetch(PDO::FETCH_ASSOC)) {
             throw new RuntimeException(
                 "This facility already has a reservation during the selected time.",
                 409
             );
         }
+
+        // NEW: Check whether another SARF already uses this number
+        $stmt = $pdo->prepare("
+            SELECT id
+            FROM sarf
+            WHERE control_number = ?
+              AND id <> ?
+            LIMIT 1
+        ");
+
+        $stmt->execute([
+            $controlNumber,
+            $id
+        ]);
+
+        if ($stmt->fetch(PDO::FETCH_ASSOC)) {
+            throw new RuntimeException(
+                "This SARF Control Number is already assigned to another request.",
+                409
+            );
+        }
+
+        // STEP 5A: Approve and save the official control number
+        $stmt = $pdo->prepare("
+            UPDATE sarf
+            SET status = 'approved',
+                control_number = ?,
+                admin_id = ?,
+                reject_reason = NULL,
+                decided_at = NOW()
+            WHERE id = ?
+              AND status = 'pending'
+        ");
+
+        $stmt->execute([
+            $controlNumber,
+            $adminId,
+            $id
+        ]);
+
+    } else {
+
+        // STEP 5B: Reject without requiring a control number
+        $stmt = $pdo->prepare("
+            UPDATE sarf
+            SET status = 'rejected',
+                admin_id = ?,
+                reject_reason = ?,
+                decided_at = NOW()
+            WHERE id = ?
+              AND status = 'pending'
+        ");
+
+        $stmt->execute([
+            $adminId,
+            $reason,
+            $id
+        ]);
     }
-
-    // STEP 5: Update the SARF and save the admin ID
-    $stmt = $pdo->prepare("
-        UPDATE sarf
-        SET status = ?,
-            admin_id = ?,
-            reject_reason = ?,
-            decided_at = NOW()
-        WHERE id = ? AND status = 'pending'
-    ");
-
-    $stmt->execute([
-        $status,
-        $adminId,
-        $status === "rejected" ? $reason : null,
-        $id
-    ]);
 
     if ($stmt->rowCount() === 0) {
         throw new RuntimeException(
@@ -180,7 +249,7 @@ try {
         );
     }
 
-    // STEP 6: Create the schedule only if approved
+    // STEP 6: Create a schedule ONLY when approved
     if ($status === "approved") {
 
         $stmt = $pdo->prepare("
@@ -203,12 +272,13 @@ try {
     $pdo->commit();
 
     echo json_encode([
-        "message" => "Request " . $status . " successfully."
+        "message" => "Request " . $status . " successfully.",
+        "controlNumber" => $status === "approved" ? $controlNumber : null
     ]);
 
 } catch (Throwable $error) {
 
-    // Undo changes if something failed
+    // Undo all changes if anything fails
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
@@ -231,15 +301,19 @@ try {
         http_response_code(500);
 
         echo json_encode([
-            "message" => $error->getMessage()
+            "message" => "Could not process the request."
         ]);
     }
 
 } finally {
 
-    // Release the facility lock after processing
+    // Release the facility lock
     if ($lockAcquired) {
-        $stmt = $pdo->prepare("SELECT RELEASE_LOCK(?)");
-        $stmt->execute([$lockName]);
+        try {
+            $stmt = $pdo->prepare("SELECT RELEASE_LOCK(?)");
+            $stmt->execute([$lockName]);
+        } catch (Throwable $lockError) {
+            error_log($lockError->getMessage());
+        }
     }
 }

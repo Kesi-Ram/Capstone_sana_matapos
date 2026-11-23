@@ -1145,7 +1145,7 @@ footer {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 6mm;
+    margin: 0mm;
   }
 
   .no-print {

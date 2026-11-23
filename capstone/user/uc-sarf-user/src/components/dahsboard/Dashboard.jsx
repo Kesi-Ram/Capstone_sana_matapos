@@ -41,6 +41,10 @@ export default function Dashboard({ onLogout }) {
     }
   }
 
+function formatRequestId(id) {
+  return `REQ-${String(id).padStart(6, '0')}`
+}
+
   
 
   return (
@@ -65,7 +69,7 @@ export default function Dashboard({ onLogout }) {
             <table>
               <thead>
                 <tr>
-                  <th>Control No.</th>
+                  <th>Request ID</th>
                   <th>Activity</th>
                   <th>Venue</th>
                   <th>Schedule</th>
@@ -76,7 +80,7 @@ export default function Dashboard({ onLogout }) {
               <tbody>
                 {requests.map((r) => (
                   <tr key={r.id}>
-                    <td>{r.id}</td>
+                    <td>{formatRequestId(r.id)}</td>
                     <td>{r.title}</td>
                     <td>{r.venue}</td>
                     <td>{r.date}</td>

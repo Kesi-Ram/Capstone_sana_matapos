@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 // Change this URL to match where facilities.php is saved under htdocs.
-const FACILITIES_API_URL ='http://localhost/capstone_sana_matapos/capstone/admin/api/facilities.php'
+const FACILITIES_API_URL ='/api/facilities.php'
 
 function FacilityIcon({ type }) {
   const icons = {
