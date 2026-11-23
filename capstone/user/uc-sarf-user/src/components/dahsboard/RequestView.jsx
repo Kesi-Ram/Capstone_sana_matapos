@@ -91,6 +91,10 @@ function SupportView({ title, venue, listLabel, items, d, prefix, approver, extr
   )
 }
 
+function formatRequestId(id) {
+  return `REQ-${String(id).padStart(6, '0')}`
+}
+
 // ---------- page ----------
 export default function RequestView({ id, autoPrint }) {
 const [request, setRequest] = useState(null);
@@ -168,7 +172,7 @@ if (error || !request) {
       <div className="page-heading no-print">
         <div>
           <div className="eyebrow">SARF PREVIEW</div>
-          <h1>{request.id}</h1>
+          <h1>Request ID: {formatRequestId(request.id)}</h1>
           <p>
             <span className="status-pill">{request.status}</span>
           </p>
@@ -181,12 +185,30 @@ if (error || !request) {
         </div>
       </div>
 
-      <div className="print-only print-title">
-        <strong>UNIVERSITY OF THE CORDILLERAS</strong>
-        <div>Control No.: {request.id}</div>
-      </div>
 
-      <div className="detail-sheet">
+<div className="print-only print-title">
+  <strong>UNIVERSITY OF THE CORDILLERAS</strong>
+</div>
+
+<div className="detail-sheet">
+
+<div className="sarf-identifiers">
+  <div>
+    <strong>Request ID: </strong>
+    {formatRequestId(request.id)}
+  </div>
+
+  <div className="sarf-control">
+    <strong>SARF Control No. :</strong>
+
+    {request.control_number ? (
+      <span>{request.control_number}</span>
+    ) : (
+      <span className="control-line"></span>
+    )}
+  </div>
+</div>
+
         {/* ================= PAGE 1 ================= */}
         <div className="box sheet-head">
           <strong>VICE PRESIDENT FOR ACADEMICS AND RESEARCH</strong>

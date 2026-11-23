@@ -1,6 +1,6 @@
 <?php
 $host   = "localhost";
-$dbName = "db_updated";
+$dbName = "db_dev";
 $user   = "root";
 $pass   = "";
 

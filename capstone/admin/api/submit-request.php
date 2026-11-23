@@ -95,15 +95,18 @@ try {
         throw new Exception("The selected facility is unavailable.");
     }
 
-    $controlNumber = "SARF-" . date("Y") . "-" . random_int(100000, 999999);
 
-    $saveSarf = $pdo->prepare(
-        "INSERT INTO sarf (requester_id, control_number, status)
-         VALUES (?, ?, 'pending')"
-    );
-    $saveSarf->execute([$_SESSION["requester_id"], $controlNumber]);
 
-    $sarfId = $pdo->lastInsertId();
+$saveSarf = $pdo->prepare(
+    "INSERT INTO sarf (requester_id, control_number, status)
+     VALUES (?, NULL, 'pending')"
+);
+
+$saveSarf->execute([
+    $_SESSION["requester_id"]
+]);
+
+$sarfId = $pdo->lastInsertId();
 
     $saveDetails = $pdo->prepare(
         "INSERT INTO sarf_req (
@@ -139,11 +142,12 @@ try {
 
     $pdo->commit();
 
-    http_response_code(201);
-    echo json_encode([
-        "message" => "Request submitted.",
-        "controlNumber" => $controlNumber,
-    ]);
+http_response_code(201);
+
+echo json_encode([
+    "message" => "SARF submitted successfully.",
+    "requestId" => (int)$sarfId
+]);
 } catch (Throwable $error) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();

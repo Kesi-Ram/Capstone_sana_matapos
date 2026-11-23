@@ -68,6 +68,8 @@ export default function Schedules() {
           ]}
 
           initialView="dayGridMonth"
+          eventDisplay="block"
+          
 
           headerToolbar={{
             left: 'prev,next today',

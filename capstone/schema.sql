@@ -45,22 +45,6 @@ CREATE TABLE IF NOT EXISTS `facility` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Schedules
-CREATE TABLE schedules (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    sarf_id INT NOT NULL UNIQUE,
-    facility_id INT NOT NULL,
-    event_title VARCHAR(255) NOT NULL,
-    start_datetime DATETIME NOT NULL,
-    end_datetime DATETIME NOT NULL,
-    status VARCHAR(30) NOT NULL DEFAULT 'scheduled',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    INDEX (facility_id),
-    INDEX (start_datetime, end_datetime)
-);
-
-
 -- 3. SARF TRACKING AND DECISIONS
 CREATE TABLE IF NOT EXISTS `sarf` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
@@ -208,7 +192,6 @@ INSERT IGNORE INTO `sarf_req`
   NULL, NULL);
 
 COMMIT;
-
 
 -- Optional verification after import:
 -- SELECT COUNT(*) AS accounts FROM users;

@@ -65,7 +65,7 @@ function Dashboard({ user }) {
     }
   }
 
-  async function updateRequestStatus(id, newStatus, reason = "") {
+  async function updateRequestStatus(id, newStatus, reason = "", controlNumber = "") {
     setSaving(true);
     setError("");
 
@@ -80,6 +80,7 @@ function Dashboard({ user }) {
           id,
           status: newStatus,
           reason,
+          controlNumber,
         }),
       });
 
@@ -128,7 +129,9 @@ function Dashboard({ user }) {
       <RequestDetails
         request={selectedRequest}
         onBack={() => setSelectedRequest(null)}
-        onApprove={(id) => updateRequestStatus(id, "approved")}
+        onApprove={(id, controlNumber) =>
+  updateRequestStatus(id, "approved", "", controlNumber)
+}
         onReject={(id, reason) =>
           updateRequestStatus(id, "rejected", reason)
         }
@@ -137,7 +140,19 @@ function Dashboard({ user }) {
     );
   }
 
+function formatRequestId(id) {
+  return `REQ-${String(id).padStart(6, '0')}`
+}
+
   const recentRequests = dashboardData.recent_requests || [];
+
+  function formatReference(request) {
+  if (request.status === "approved" && request.control_number) {
+    return request.control_number;
+  }
+
+  return `REQ-${String(request.id).padStart(6, "0")}`;
+}
 
   return (
     <div className="dashboard">
@@ -176,7 +191,7 @@ function Dashboard({ user }) {
           <table className="requests-table">
             <thead>
               <tr>
-                <th>Control No.</th>
+                <th>Request ID</th>
                 <th>Organization</th>
                 <th>Activity</th>
                 <th>Facility</th>
@@ -189,7 +204,7 @@ function Dashboard({ user }) {
             <tbody>
               {recentRequests.map((request) => (
                 <tr key={request.id}>
-                  <td>{request.control_number}</td>
+                  <td>{formatReference(request)}</td>
                   <td>{request.organization}</td>
                   <td>{request.nature_of_activity}</td>
                   <td>{request.facility}</td>

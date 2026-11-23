@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import "./requestDetails.css";
 
@@ -12,18 +13,29 @@ function RequestDetails({
   const [rejectReason, setRejectReason] = useState("");
   const [actionError, setActionError] = useState("");
 
+  // Store the SARF Control Number entered by FMO
+  const [controlNumber, setControlNumber] = useState(
+    request.control_number || ""
+  );
+
   function show(value) {
-    return value === null || value === undefined || value === ""
-      ? "Not provided"
-      : value;
+    if (value === null || value === undefined || value === "") {
+      return "Not provided";
+    }
+
+    return value;
   }
 
   function formatDate(datetime) {
-    if (!datetime) return "Not provided";
+    if (!datetime) {
+      return "Not provided";
+    }
 
     const date = new Date(datetime.replace(" ", "T"));
 
-    if (Number.isNaN(date.getTime())) return datetime;
+    if (Number.isNaN(date.getTime())) {
+      return datetime;
+    }
 
     return date.toLocaleString("en-PH", {
       dateStyle: "medium",
@@ -31,34 +43,81 @@ function RequestDetails({
     });
   }
 
+  function formatRequestId(id) {
+    return `REQ-${String(id).padStart(6, "0")}`;
+  }
+
+  // Update the input while the admin types
+  function handleControlNumberChange(event) {
+    setControlNumber(event.target.value);
+    setActionError("");
+  }
+
+  // Approve the SARF request
   async function handleApprove() {
     setActionError("");
 
-    if (!onApprove) return;
+    if (!onApprove || saving) {
+      return;
+    }
+
+    // Get the entered number and remove extra spaces
+    const enteredNumber = controlNumber.trim();
+
+    // Require a control number before approving
+    if (enteredNumber === "") {
+      setActionError(
+        "Please enter the SARF Control Number before approving."
+      );
+      return;
+    }
+
+    if (enteredNumber.length > 100) {
+      setActionError(
+        "SARF Control Number must not exceed 100 characters."
+      );
+      return;
+    }
 
     const confirmed = window.confirm(
-      "Have you verified the signed SARF and request details?"
+      "Have you verified the signed SARF and the official SARF Control Number?"
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     try {
-      await onApprove(request.id);
+      // Send BOTH the request ID and entered control number
+      console.log("Sending SARF Control Number:", enteredNumber);
+
+      await onApprove(request.id, enteredNumber);
+
     } catch (error) {
       setActionError(error.message);
     }
   }
 
+  // Reject the request without requiring a control number
   async function handleReject(event) {
     event.preventDefault();
     setActionError("");
 
-    if (!rejectReason.trim() || !onReject) return;
+    if (!onReject || saving) {
+      return;
+    }
+
+    if (rejectReason.trim() === "") {
+      setActionError("Please provide a rejection reason.");
+      return;
+    }
 
     try {
       await onReject(request.id, rejectReason.trim());
+
       setShowRejectModal(false);
       setRejectReason("");
+
     } catch (error) {
       setActionError(error.message);
     }
@@ -66,14 +125,25 @@ function RequestDetails({
 
   return (
     <div className="request-details">
-      <button type="button" className="details-back" onClick={onBack}>
+
+      <button
+        type="button"
+        className="details-back"
+        onClick={onBack}
+      >
         ← Back to Requests
       </button>
 
       <header className="details-header">
         <div>
           <h1>{request.name_of_program}</h1>
-          <p>Control No. {request.control_number}</p>
+
+          <h2>{formatRequestId(request.id)}</h2>
+
+          <p>
+            SARF Control No.:{" "}
+            {request.control_number || "Not yet assigned"}
+          </p>
         </div>
 
         <span className={`request-badge ${request.status}`}>
@@ -81,6 +151,7 @@ function RequestDetails({
         </span>
       </header>
 
+      {/* ACTIVITY INFORMATION */}
       <section className="details-card">
         <h2>Activity Information</h2>
 
@@ -127,6 +198,7 @@ function RequestDetails({
         </div>
       </section>
 
+      {/* PERSON IN CHARGE */}
       <section className="details-card">
         <h2>Person In Charge</h2>
 
@@ -153,6 +225,7 @@ function RequestDetails({
         </div>
       </section>
 
+      {/* ADDITIONAL INFORMATION */}
       <section className="details-card">
         <h2>Additional Information</h2>
 
@@ -167,7 +240,9 @@ function RequestDetails({
             <p>
               {request.estimated_total_budget == null
                 ? "Not provided"
-                : `₱${Number(request.estimated_total_budget).toLocaleString("en-PH")}`}
+                : `₱${Number(
+                    request.estimated_total_budget
+                  ).toLocaleString("en-PH")}`}
             </p>
           </div>
 
@@ -180,35 +255,68 @@ function RequestDetails({
         </div>
       </section>
 
+      {/* FMO PROCESSING - PENDING REQUESTS ONLY */}
       {request.status === "pending" && (
-        <div className="details-actions">
-          <button
-            type="button"
-            className="details-reject-btn"
-            disabled={saving || !onReject}
-            onClick={() => {
-              setActionError("");
-              setShowRejectModal(true);
-            }}
-          >
-            Reject Request
-          </button>
+        <>
+          <section className="details-card">
+            <h2>FMO Processing</h2>
 
-          <button
-            type="button"
-            className="details-approve-btn"
-            disabled={saving || !onApprove}
-            onClick={handleApprove}
-          >
-            {saving ? "Processing..." : "Approve Request"}
-          </button>
+            <div className="control-number-field">
+              <label htmlFor="sarf-control-number">
+                SARF Control Number
+                <span className="required-mark"> *</span>
+              </label>
 
-          {actionError && !showRejectModal && (
-            <p role="alert">{actionError}</p>
-          )}
-        </div>
+              <input
+                id="sarf-control-number"
+                type="text"
+                name="controlNumber"
+                value={controlNumber}
+                onChange={handleControlNumberChange}
+                placeholder="Enter SARF Control No."
+                maxLength={100}
+                disabled={saving}
+              />
+
+              <small>
+                Required for approval only. Enter the number
+                written on the signed SARF.
+              </small>
+            </div>
+          </section>
+
+          <div className="details-actions">
+
+            <button
+              type="button"
+              className="details-reject-btn"
+              disabled={saving || !onReject}
+              onClick={() => {
+                setActionError("");
+                setShowRejectModal(true);
+              }}
+            >
+              Reject Request
+            </button>
+
+            <button
+              type="button"
+              className="details-approve-btn"
+              disabled={saving || !onApprove}
+              onClick={handleApprove}
+            >
+              {saving ? "Processing..." : "Approve Request"}
+            </button>
+
+            {actionError && !showRejectModal && (
+              <p role="alert">{actionError}</p>
+            )}
+
+          </div>
+        </>
       )}
 
+      {/* REJECTION MODAL */}
       {showRejectModal && (
         <div className="reject-overlay">
           <div
@@ -221,28 +329,37 @@ function RequestDetails({
 
             <p>
               Please provide a reason for rejecting request{" "}
-              {request.control_number}.
+              {formatRequestId(request.id)}.
             </p>
 
             <form onSubmit={handleReject}>
-              <label htmlFor="reject-reason">Rejection Reason</label>
+              <label htmlFor="reject-reason">
+                Rejection Reason
+              </label>
 
               <textarea
                 id="reject-reason"
                 value={rejectReason}
-                onChange={(event) => setRejectReason(event.target.value)}
+                onChange={(event) =>
+                  setRejectReason(event.target.value)
+                }
                 placeholder="Enter the reason for rejection..."
                 rows={4}
                 required
               />
 
-              {actionError && <p role="alert">{actionError}</p>}
+              {actionError && (
+                <p role="alert">{actionError}</p>
+              )}
 
               <div className="reject-modal-actions">
                 <button
                   type="button"
                   disabled={saving}
-                  onClick={() => setShowRejectModal(false)}
+                  onClick={() => {
+                    setShowRejectModal(false);
+                    setActionError("");
+                  }}
                 >
                   Cancel
                 </button>
@@ -252,13 +369,16 @@ function RequestDetails({
                   className="details-reject-btn"
                   disabled={saving || !rejectReason.trim()}
                 >
-                  {saving ? "Processing..." : "Confirm Rejection"}
+                  {saving
+                    ? "Processing..."
+                    : "Confirm Rejection"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
     </div>
   );
 }

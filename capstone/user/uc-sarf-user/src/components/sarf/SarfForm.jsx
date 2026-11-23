@@ -172,11 +172,14 @@ useEffect(() => {
 try {
   const result = await submitSarf(values)
 
+  console.log("SARF RESPONSE:", result)
+
   clearDraft()
   setValues(EMPTY_FORM)
   setFormKey((key) => key + 1)
 
-  show('ok', `SARF submitted. Control No.: ${result.controlNumber}`)
+  show(`Request submitted successfully! Request ID: ${result.requestId}`)
+
 } catch (error) {
   show('error', error.message)
 }
