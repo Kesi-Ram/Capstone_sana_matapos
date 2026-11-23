@@ -4,12 +4,19 @@ ICLONE SA HTDOCS NG XAMPP!!!!!!!!
 
 import schema
 
-open and start xampp
+OPEN XAMPP AND START APACHE AN MYSQL
 
-run server - C:\xampp\php\php.exe -S localhost:8000 -t .\admin\api
+run server - 
+
+windows - C:\xampp\php\php.exe -S 127.0.0.1:8000 -t .\api  
+mac - /Applications/XAMPP/xamppfiles/bin/php -S 127.0.0.1:8000 -t ./admin/api
 
 npm run dev on admin - cd admin, npm run dev
 
 npm run on user - cd user, cd usc-sarf-user, npm run dev
 
+NPM INSTALL LAGI!!!
+
 http://localhost/phpmyadmin
+
+

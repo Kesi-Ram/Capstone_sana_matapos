@@ -9,7 +9,6 @@ import {
 } from '../../data/sarfOptions'
 import { rangeConflicts } from '../../utils/schedule'
 import { clearDraft, loadDraft, saveDraft } from '../../utils/storage'
-import { bookingsForVenue} from '../../utils/schedule'
 import { submitSarf } from '../../api/requests'
 const EMPTY_FORM = {
   facilityId:'', participants: [], checklist: [], bmo: [], lmo: [], itss: [], admin: [], charges: [],
@@ -20,7 +19,7 @@ export default function SarfForm() {
   const [message, setMessage] = useState(null)
   const [formKey, setFormKey] = useState(0) // bump to also clear the file input
 
-  const API_BASE_URL = 'http://localhost/capstone_sana_matapos/capstone/admin/api'
+  const API_BASE_URL = '/api'
 
   const [facilities, setFacilities] = useState([])
   const [facilitiesLoading, setFacilitiesLoading] = useState(true)
@@ -51,45 +50,73 @@ useEffect(() => {
   loadFacilities()
 }, [])
 
+
+
 useEffect(() => {
+  let cancelled = false
+
   async function loadAvailability() {
+    // Clear old bookings when the facility changes.
+    setBookings([])
+    setAvailabilityError('')
+
+    // Don't fetch if no facility is selected.
     if (!values.facilityId) {
-      setBookings([])
-      setAvailabilityError('')
+      setAvailabilityLoading(false)
       return
     }
 
     setAvailabilityLoading(true)
-    setAvailabilityError('')
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/availability.php?facility_id=${values.facilityId}`
+        `${API_BASE_URL}/availability.php?facility_id=${encodeURIComponent(values.facilityId)}`
       )
 
       if (!response.ok) {
-        throw new Error('Could not load availability.')
+        throw new Error('Could not load facility availability.')
       }
 
+      // PHP returns an array of reservations.
       const bookingRows = await response.json()
 
-      // The calendar expects JavaScript Date values, so convert the PHP date strings.
-      const calendarBookings = bookingRows.map((booking) => ({
-        start: new Date(booking.start),
-        end: new Date(booking.end),
-      }))
+      // Convert the date strings into JavaScript Date objects.
+      const calendarBookings = bookingRows.map((booking) => {
+        return {
+          start: new Date(booking.start),
+          end: new Date(booking.end),
+        }
+      })
 
-      setBookings(calendarBookings)
+      console.log('Loaded bookings:', calendarBookings)
+
+      if (!cancelled) {
+        setBookings(calendarBookings)
+      }
+
     } catch (error) {
-      setBookings([])
-      setAvailabilityError('Could not load availability for this facility.')
+      console.error('Availability error:', error)
+
+      if (!cancelled) {
+        setBookings([])
+        setAvailabilityError(error.message)
+      }
+
     } finally {
-      setAvailabilityLoading(false)
+      if (!cancelled) {
+        setAvailabilityLoading(false)
+      }
     }
   }
 
   loadAvailability()
+
+  return () => {
+    cancelled = true
+  }
 }, [values.facilityId])
+
+
 
   const api = useMemo(() => ({
     values,
@@ -105,7 +132,6 @@ useEffect(() => {
       }),
   }), [values])
 
-  const venueBookings = bookingsForVenue(bookings, values.venue ?? '')
 
   function handleStartChange(v) {
     api.setField('start', v)
@@ -133,15 +159,10 @@ useEffect(() => {
       show('error', 'Activity end date/time must be later than the start date/time.')
       return
     }
-    if (rangeConflicts(venueBookings, new Date(values.start), new Date(values.end))) {
-      show('error', 'The selected schedule overlaps a booked time slot for this venue. Choose another date or time.')
-      return
-    }
     if (availabilityLoading || availabilityError) {
       show('error', 'Wait for the facility availability to load before submitting.')
       return
     }
-
     if (rangeConflicts(bookings, new Date(values.start), new Date(values.end))) {
       show('error', 'The selected schedule overlaps a booked time slot. Choose another time.')
       return
@@ -203,8 +224,6 @@ try {
               <Input name="title" label="Title of Activity Program" required />
               <TextArea name="nature" label="Nature of Activity" required />
               <span className="lb">Activity Date/Time <em>*</em></span>
-              <DateTimePicker label="Start" mode="start" value={values.start} onChange={handleStartChange} bookings={bookings} />
-              <DateTimePicker label="End" mode="end" value={values.end} minValue={values.start} onChange={(value) => api.setField('end', value)} bookings={bookings}/>
               <small className="muted">Taken slots follow the venue entered below. With no venue entered, all campus bookings are shown.</small>
               <label className="ln">Venue/Location <em>*</em>
                 <select
@@ -224,6 +243,8 @@ try {
                   ))}
                 </select>
               </label>
+              <DateTimePicker label="Start" mode="start" value={values.start} onChange={handleStartChange} bookings={bookings} />
+              <DateTimePicker label="End" mode="end" value={values.end} minValue={values.start} onChange={(value) => api.setField('end', value)} bookings={bookings}/>
           </div>
 
                 {facilitiesError && <small className="error">{facilitiesError}</small>}

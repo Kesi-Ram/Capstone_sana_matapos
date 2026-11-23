@@ -1,4 +1,3 @@
-import { SEED_BOOKINGS } from '../data/bookings'
 
 export const SLOT_MINUTES = 30
 // Set to 14 to enforce the form's "two weeks prior" rule in the calendar.
@@ -32,14 +31,6 @@ export function formatTime(minutes) {
 }
 export const slotLabel = (m) => `${formatTime(m)}-${formatTime(m + SLOT_MINUTES)}`
 
-// ---- bookings ----
-export function buildBookings(requests = []) {
-  const seed = SEED_BOOKINGS.map((b) => ({ venue: b.venue, start: new Date(b.start), end: new Date(b.end) }))
-  const mine = requests
-    .filter((r) => r.data?.start && r.data?.end)
-    .map((r) => ({ venue: r.data.venue || '', start: new Date(r.data.start), end: new Date(r.data.end) }))
-  return [...seed, ...mine]
-}
 
 // With no venue typed yet, every booking is shown.
 export function bookingsForVenue(bookings, venue = '') {

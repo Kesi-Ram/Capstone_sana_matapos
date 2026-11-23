@@ -1,8 +1,18 @@
 import { useEffect, useId, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  DAY_SLOTS, MIN_LEAD_DAYS, at, dayStatus, formatTime, isSlotBooked,
-  rangeConflicts, slotLabel, toDateKey, toMinutes, toValue,
+  DAY_SLOTS,
+  SLOT_MINUTES,
+  MIN_LEAD_DAYS,
+  at,
+  dayStatus,
+  formatTime,
+  isSlotBooked,
+  rangeConflicts,
+  slotLabel,
+  toDateKey,
+  toMinutes,
+  toValue,
 } from '../../utils/schedule'
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -56,18 +66,47 @@ export default function DateTimePicker({ label, mode, value, onChange, minValue,
   const canGoBack = month > monthStart(new Date())
 
   // ----- time slots for the picked day -----
-  const slots = picked
-    ? DAY_SLOTS.map((min) => {
-        let disabled = isSlotBooked(bookings, picked, min)
-        if (!disabled && mode === 'start') disabled = at(picked, min) <= now
-        if (!disabled && mode === 'end' && minValue) {
-          const from = new Date(minValue)
-          const to = at(picked, min + 30)
-          disabled = to <= from || rangeConflicts(bookings, from, to)
+
+const slots = picked
+  ? DAY_SLOTS.map((min) => {
+      let disabled = false
+
+      if (mode === 'start') {
+        // Disable already booked slots.
+        disabled = isSlotBooked(bookings, picked, min)
+
+        // Prevent selecting a time in the past.
+        if (!disabled) {
+          disabled = at(picked, min) <= now
         }
-        return { min, disabled, val: toValue(picked, mode === 'start' ? min : min + 30) }
-      })
-    : []
+      }
+
+      if (mode === 'end' && minValue) {
+        const from = new Date(minValue)
+        const to = at(picked, min + SLOT_MINUTES)
+
+        // End must be later than start.
+        if (to <= from) {
+          disabled = true
+        }
+
+        // Check the entire selected time range.
+        if (!disabled) {
+          disabled = rangeConflicts(bookings, from, to)
+        }
+      }
+
+      return {
+        min,
+        disabled,
+        val: toValue(
+          picked,
+          mode === 'start' ? min : min + SLOT_MINUTES
+        ),
+      }
+    })
+  : []
+
 
   const display = value
     ? `${longDate(value.slice(0, 10))}, ${formatTime(toMinutes(value.slice(11, 16)))}`
