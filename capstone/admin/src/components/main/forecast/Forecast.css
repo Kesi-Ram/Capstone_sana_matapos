@@ -1,0 +1,212 @@
+
+/* Main page */
+.forecast-page {
+  width: 100%;
+  max-width: 1200px;
+  min-width: 0;
+  padding: 24px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  color: #1f2a24;
+  font-family: "Inter", sans-serif;
+}
+
+/* Page heading */
+.forecast-heading {
+  margin-bottom: 24px;
+}
+
+.forecast-heading h1 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.forecast-heading p {
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* Notice about simulated data */
+.forecast-notice {
+  background-color: #eaf3ec;
+  border-left: 4px solid #4f7d5c;
+  padding: 14px 18px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 13px;
+}
+
+/* Summary cards */
+.forecast-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.forecast-summary-card {
+  background-color: #eaf3ec;
+  padding: 24px;
+  border: 1px solid #d1e2d5;
+  border-radius: 12px;
+}
+
+.forecast-summary-card span {
+  display: block;
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 12px;
+}
+
+.forecast-summary-card h2 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #3e6649;
+  margin: 0;
+}
+
+/* Forecast section */
+.forecast-section {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.forecast-section h2 {
+  font-size: 19px;
+  margin-bottom: 24px;
+}
+
+/* Individual facility */
+.forecast-item {
+  padding: 16px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.forecast-item:last-child {
+  border-bottom: none;
+}
+
+.forecast-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.forecast-item-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.forecast-item-header span {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3e6649;
+  white-space: nowrap;
+}
+
+/* Demand progress bars */
+.forecast-progress {
+  display: block;
+  width: 100%;
+  height: 12px;
+  border: none;
+  border-radius: 8px;
+  overflow: hidden;
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: #e2e8f0;
+}
+
+.forecast-progress::-webkit-progress-bar {
+  background-color: #e2e8f0;
+  border-radius: 8px;
+}
+
+.forecast-progress::-webkit-progress-value {
+  background-color: #4f7d5c;
+  border-radius: 8px;
+}
+
+.forecast-progress::-moz-progress-bar {
+  background-color: #4f7d5c;
+  border-radius: 8px;
+}
+
+/* DARK MODE */
+.admin-layout[data-theme="dark"] .forecast-page {
+  color: #f1f7f2;
+}
+
+.admin-layout[data-theme="dark"] .forecast-heading p {
+  color: #a8bcae;
+}
+
+.admin-layout[data-theme="dark"] .forecast-notice {
+  background-color: #22382c;
+  border-left-color: #78ad87;
+}
+
+.admin-layout[data-theme="dark"] .forecast-summary-card {
+  background-color: #22382c;
+  border-color: #365343;
+}
+
+.admin-layout[data-theme="dark"] .forecast-summary-card span {
+  color: #b7c8bb;
+}
+
+.admin-layout[data-theme="dark"] .forecast-summary-card h2 {
+  color: #a2d6ae;
+}
+
+.admin-layout[data-theme="dark"] .forecast-section {
+  background-color: #22382c;
+  border-color: #365343;
+}
+
+.admin-layout[data-theme="dark"] .forecast-item {
+  border-bottom-color: #365343;
+}
+
+.admin-layout[data-theme="dark"] .forecast-item-header span {
+  color: #a2d6ae;
+}
+
+.admin-layout[data-theme="dark"] .forecast-progress,
+.admin-layout[data-theme="dark"] .forecast-progress::-webkit-progress-bar {
+  background-color: #365343;
+}
+
+.admin-layout[data-theme="dark"] .forecast-progress::-webkit-progress-value,
+.admin-layout[data-theme="dark"] .forecast-progress::-moz-progress-bar {
+  background-color: #78ad87;
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+  .forecast-page {
+    padding: 12px;
+  }
+
+  .forecast-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .forecast-summary-card {
+    padding: 18px;
+  }
+
+  .forecast-section {
+    padding: 16px;
+  }
+
+  .forecast-item-header {
+    flex-wrap: wrap;
+  }
+}

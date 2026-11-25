@@ -8,6 +8,8 @@ import Schedules from './components/main/scheduleview/schedules'
 import { getCurrentUser, signOut } from './api/auth'
 import './App.css'
 
+import Forecast from './components/main/forecast/Forecast'
+
 
 // Get the previously selected theme
 function getSavedTheme() {
@@ -88,9 +90,13 @@ function App() {
   } else if (activePage === "requests") {
     pageContent = <Requests />
 
-  } else if (activePage === "schedule") {
-    pageContent = <Schedules /> 
-  } else {
+} else if (activePage === "schedule") {
+  pageContent = <Schedules />
+
+} else if (activePage === "forecast") {
+  pageContent = <Forecast />
+
+} else {
     pageContent = (
       <div className="page-placeholder">
         <h1>{pageNames[activePage]}</h1>

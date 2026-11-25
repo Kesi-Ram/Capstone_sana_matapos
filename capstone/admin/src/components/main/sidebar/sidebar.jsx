@@ -8,6 +8,7 @@ function Sidebar({ user, activePage, onNavigate, onLogout, theme, onToggleTheme 
     { id: "requests", label: "All Requests", icon: "▤" },
     { id: "schedule", label: "Schedule", icon: "▦" },
     { id: "facilities", label: "Facilities", icon: "▥" },
+    { id: "forecast", label: "Predictive Analysis", icon: "▦" }
   ];
 
   function handleLogout() {
