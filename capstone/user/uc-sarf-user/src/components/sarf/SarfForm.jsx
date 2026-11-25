@@ -177,8 +177,7 @@ try {
   clearDraft()
   setValues(EMPTY_FORM)
   setFormKey((key) => key + 1)
-
-  show(`Request submitted successfully! Request ID: ${result.requestId}`)
+  show("ok",`Request submitted successfully! Request ID: ${result.requestId}`)
 
 } catch (error) {
   show('error', error.message)
@@ -382,7 +381,7 @@ try {
           <a className="btn secondary" href="#/">Cancel</a>
           <div>
             <button className="btn secondary" type="button" onClick={handleSaveDraft}>Save Draft</button>{' '}
-            <button className="btn" type="submit">Submit SARF</button>
+            <button className="btn" type="submit" onClick={submitSarf}>Submit SARF</button>
           </div>
         </div>
 
