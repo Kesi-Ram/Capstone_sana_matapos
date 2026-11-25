@@ -171,6 +171,7 @@ useEffect(() => {
 
 try {
   const result = await submitSarf(values)
+  console.log("SARF values before submission:", values);
 
   console.log("SARF RESPONSE:", result)
 

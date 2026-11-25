@@ -130,6 +130,7 @@ return (
     <div className="forecast-section">
 
       <h2>Predicted Demand by Facility</h2>
+      <p>This chart shows the predicted number of reservation requests for each facility in the upcoming month.</p>
 
       {sortedForecasts.map((forecast) => (
 
