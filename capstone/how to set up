@@ -19,4 +19,54 @@ NPM INSTALL LAGI!!!
 
 http://localhost/phpmyadmin
 
+generate dataset_folder 
+
+mac - python3 ml/generate_data.py
+windows - python ml/generate_data.py
+
+
+
+# 1. Check Python installation
+py --version
+
+# 2. Get latest project changes (if needed)
+git pull
+
+# 3. Create Python virtual environment
+py -m venv ml\.venv
+
+# 4. Install required libraries
+ml\.venv\Scripts\python.exe -m pip install pandas scikit-learn joblib
+
+# 5. Generate dummy reservation data
+ml\.venv\Scripts\python.exe ml\generate_data.py
+
+# 6. Train the ML model
+ml\.venv\Scripts\python.exe ml\train_model.py
+
+
+
+
+
+
+
+
+# 1. Check Python installation
+python3 --version
+
+# 2. Get latest project changes (if needed)
+git pull
+
+# 3. Create Python virtual environment
+python3 -m venv ml/.venv
+
+# 4. Install required libraries
+ml/.venv/bin/python -m pip install pandas scikit-learn joblib
+
+# 5. Generate dummy reservation data
+ml/.venv/bin/python ml/generate_data.py
+
+# 6. Train the ML model
+ml/.venv/bin/python ml/train_model.py
+
 
