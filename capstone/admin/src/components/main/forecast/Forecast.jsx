@@ -105,11 +105,6 @@ return (
       </p>
     </div>
 
-    {/* Synthetic data notice */}
-    <div className="forecast-notice">
-      <strong>Simulation:</strong> These predictions are
-      based on synthetic historical reservation data.
-    </div>
 
     {/* Summary cards */}
     <div className="forecast-summary">

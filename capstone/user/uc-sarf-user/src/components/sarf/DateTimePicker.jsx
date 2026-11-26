@@ -139,7 +139,8 @@ const slots = picked
               <strong id={titleId}>Activity {label}</strong>
               <button type="button" className="dtp-close" onClick={() => setOpen(false)} aria-label="Close">×</button>
             </div>
-
+            <div className="dtp-layout">
+              <div className="dtp-calendar">
             <div className="dtp-month">
               <button type="button" onClick={() => setMonth(new Date(y, m - 1, 1))} disabled={!canGoBack} aria-label="Previous month">‹</button>
               <h3>{month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h3>
@@ -174,9 +175,12 @@ const slots = picked
               })}
             </div>
 
-            <p className="dtp-legend">
-              <i className="dtp-dot" /> Some time slots are already taken. Days without a dot are fully available.
-            </p>
+                <p className="dtp-legend">
+                  <i className="dtp-dot" /> Some time slots are already taken. Days without a dot are fully available.
+                </p>
+              </div>
+
+<div className="dtp-slots"> 
 
             <div className="dtp-slots">
               <h3>Select a Time Slot</h3>
@@ -201,7 +205,9 @@ const slots = picked
               ) : (
                 <p className="dtp-hint">Choose a date above to see its time slots.</p>
               )}
+              </div>
             </div>
+           </div>
           </div>
         </div>,
         document.body,

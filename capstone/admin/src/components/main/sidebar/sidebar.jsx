@@ -4,11 +4,11 @@ import "./Sidebar.css";
 
 function Sidebar({ user, activePage, onNavigate, onLogout, theme, onToggleTheme }) {
   const menuItems = [
-    { id: "dashboard", label: "Dashboard", icon: "▦" },
-    { id: "requests", label: "All Requests", icon: "▤" },
-    { id: "schedule", label: "Schedule", icon: "▦" },
-    { id: "facilities", label: "Facilities", icon: "▥" },
-    { id: "forecast", label: "Predictive Analysis", icon: "▦" }
+    { id: "dashboard", label: "Dashboard"},
+    { id: "requests", label: "All Requests"},
+    { id: "schedule", label: "Schedule"},
+    { id: "facilities", label: "Facilities"},
+    { id: "forecast", label: "Predictive Analysis"}
   ];
 
   function handleLogout() {

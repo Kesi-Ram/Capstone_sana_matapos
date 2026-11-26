@@ -1223,3 +1223,50 @@ footer {
   outline: 2px solid #dc2626;
   outline-offset: 3px;
 }
+
+/* Make the date and time picker wider */
+.dtp-panel {
+  width: min(880px, calc(100vw - 32px));
+  max-width: 880px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Calendar on the left, time slots on the right */
+.dtp-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.7fr);
+  gap: 24px;
+  align-items: start;
+}
+
+/* Left calendar */
+.dtp-calendar {
+  min-width: 0;
+}
+
+/* Right time selection */
+.dtp-slots {
+  min-width: 0;
+  margin-top: 0;
+}
+
+/* Arrange time slots in two columns */
+.dtp-slotgrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* Smaller screens */
+@media (max-width: 700px) {
+  .dtp-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .dtp-slotgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
