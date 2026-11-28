@@ -30,7 +30,9 @@ if (!is_string($facilityId) || !ctype_digit($facilityId) || (int)$facilityId <= 
 }
 
 try {
-    // Only confirmed reservations should block time slots.
+
+    // Retrieve time ranges from confirmed schedules
+    // and pending or approved SARF requests.
     $sql = "
         SELECT
             DATE_FORMAT(start_datetime, '%Y-%m-%dT%H:%i') AS start,
@@ -39,18 +41,36 @@ try {
         WHERE facility_id = ?
           AND status = 'scheduled'
           AND end_datetime >= NOW()
-        ORDER BY start_datetime
+
+        UNION
+
+        SELECT
+            DATE_FORMAT(r.start_datetime, '%Y-%m-%dT%H:%i') AS start,
+            DATE_FORMAT(r.end_datetime, '%Y-%m-%dT%H:%i') AS end
+        FROM sarf_req AS r
+        INNER JOIN sarf AS s
+            ON r.sarf_id = s.id
+        WHERE r.facility_id = ?
+          AND s.status IN ('pending', 'approved')
+          AND r.end_datetime >= NOW()
+
+        ORDER BY start
     ";
 
     $statement = $pdo->prepare($sql);
-    $statement->execute([(int)$facilityId]);
 
-    // Keep the same JSON format expected by your React form.
+    $statement->execute([
+        (int)$facilityId,
+        (int)$facilityId
+    ]);
+
+    // Return the time ranges expected by DateTimePicker.
     echo json_encode(
         $statement->fetchAll(PDO::FETCH_ASSOC)
     );
 
 } catch (PDOException $error) {
+
     error_log($error->getMessage());
 
     http_response_code(500);

@@ -108,35 +108,3 @@ export function CheckGroup({ name, options }) {
   )
 }
 
-// Signature line (left) + date on a line (right). The signature space is left blank.
-export function SignBlock({ label, title, nameKey, dateKey }) {
-  const { values, setField } = useSarf()
-  return (
-    <div className="sign-block">
-      <div className="sign-col">
-        <span className="sign-label">{label}</span>
-        <div className="sign-space" />
-        <div className="sign-line" />
-        <input
-          className="sign-name"
-          placeholder="Type name"
-          aria-label={`Printed name of ${title}`}
-          value={values[nameKey] ?? ''}
-          onChange={(e) => setField(nameKey, e.target.value)}
-        />
-        <span className="sign-title">{title}</span>
-      </div>
-      <div className="sign-col">
-        <span className="sign-label">Date:</span>
-        <input
-          className="sign-date"
-          type="date"
-          aria-label={`Date signed by ${title}`}
-          value={values[dateKey] ?? ''}
-          onChange={(e) => setField(dateKey, e.target.value)}
-        />
-        <div className="sign-line" />
-      </div>
-    </div>
-  )
-}

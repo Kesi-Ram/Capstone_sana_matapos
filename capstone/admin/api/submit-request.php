@@ -1,16 +1,22 @@
+
 <?php
+
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$allowedOrigins = ['http://localhost:5173', 'http://localhost:5174'];
+$allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174'
+];
 
 if (in_array($origin, $allowedOrigins, true)) {
     header("Access-Control-Allow-Origin: $origin");
     header("Access-Control-Allow-Credentials: true");
 }
 
+header("Content-Type: application/json; charset=utf-8");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     http_response_code(204);
     exit;
 }
@@ -29,6 +35,7 @@ if (!isset($_SESSION["requester_id"])) {
     echo json_encode(["message" => "Please log in first."]);
     exit;
 }
+
 $input = json_decode(file_get_contents("php://input"), true);
 $values = $input["values"] ?? null;
 
@@ -38,6 +45,7 @@ if (!is_array($values)) {
     exit;
 }
 
+// Check required SARF fields.
 $requiredFields = [
     "activityType",
     "organization",
@@ -56,67 +64,163 @@ $requiredFields = [
 foreach ($requiredFields as $field) {
     if (empty($values[$field])) {
         http_response_code(400);
-
         echo json_encode([
             "message" => "Missing required field: " . $field
         ]);
-
         exit;
     }
 }
-    $start = DateTime::createFromFormat("Y-m-d\TH:i", $values["start"]);
-$end = DateTime::createFromFormat("Y-m-d\TH:i", $values["end"]);
+
+// Validate dates and times.
+$start = DateTime::createFromFormat(
+    "Y-m-d\TH:i",
+    $values["start"]
+);
+
+$end = DateTime::createFromFormat(
+    "Y-m-d\TH:i",
+    $values["end"]
+);
 
 if (!$start || !$end || $end <= $start) {
     http_response_code(400);
-    echo json_encode(["message" => "The selected dates or times are invalid."]);
+    echo json_encode([
+        "message" => "The selected dates or times are invalid."
+    ]);
     exit;
 }
 
+$startDateTime = $start->format("Y-m-d H:i:s");
+$endDateTime = $end->format("Y-m-d H:i:s");
+
 $facilityId = (int)$values["facilityId"];
+
 $participants = $values["participants"] ?? [];
+
 $participantsText = is_array($participants)
     ? implode(", ", $participants)
     : "";
 
 $budgetSource = trim($values["budgetSource"] ?? "");
-$budget = ($values["budget"] ?? "") === "" ? null : $values["budget"];
+
+$budget = ($values["budget"] ?? "") === ""
+    ? null
+    : $values["budget"];
+
+// Preserve all SARF fields, including support requirements.
 $formData = json_encode($values, JSON_UNESCAPED_UNICODE);
 
 try {
+
     $pdo->beginTransaction();
 
+    // STEP 1: Check if the facility is active.
+    // FOR UPDATE prevents two submissions from checking
+    // the same facility simultaneously while saving.
     $facilityCheck = $pdo->prepare(
-        "SELECT id FROM facility WHERE id = ? AND is_active = 1"
+        "SELECT id
+         FROM facility
+         WHERE id = ? AND is_active = 1
+         FOR UPDATE"
     );
+
     $facilityCheck->execute([$facilityId]);
 
     if (!$facilityCheck->fetch()) {
-        throw new Exception("The selected facility is unavailable.");
+        throw new DomainException(
+            "The selected facility is unavailable.",
+            409
+        );
     }
 
+    // STEP 2: Check existing pending and approved SARFs.
+    $pendingCheck = $pdo->prepare(
+        "SELECT s.id
+         FROM sarf AS s
+         JOIN sarf_req AS r
+             ON s.id = r.sarf_id
+         WHERE r.facility_id = ?
+           AND s.status IN ('pending', 'approved')
+           AND r.start_datetime < ?
+           AND r.end_datetime > ?
+         LIMIT 1"
+    );
 
+    $pendingCheck->execute([
+        $facilityId,
+        $endDateTime,
+        $startDateTime
+    ]);
 
-$saveSarf = $pdo->prepare(
-    "INSERT INTO sarf (requester_id, control_number, status)
-     VALUES (?, NULL, 'pending')"
-);
+    if ($pendingCheck->fetch()) {
+        throw new DomainException(
+            "This schedule is already reserved or pending approval. Please select another date or time.",
+            409
+        );
+    }
 
-$saveSarf->execute([
-    $_SESSION["requester_id"]
-]);
+    // STEP 3: Also check confirmed schedules.
+    // This covers reservations stored in schedules,
+    // including any created outside normal SARF submission.
+    $scheduleCheck = $pdo->prepare(
+        "SELECT id
+         FROM schedules
+         WHERE facility_id = ?
+           AND status = 'scheduled'
+           AND start_datetime < ?
+           AND end_datetime > ?
+         LIMIT 1"
+    );
 
-$sarfId = $pdo->lastInsertId();
+    $scheduleCheck->execute([
+        $facilityId,
+        $endDateTime,
+        $startDateTime
+    ]);
 
+    if ($scheduleCheck->fetch()) {
+        throw new DomainException(
+            "This facility is already booked for the selected schedule.",
+            409
+        );
+    }
+
+    // STEP 4: No conflict found.
+    // Save the new request as pending.
+    $saveSarf = $pdo->prepare(
+        "INSERT INTO sarf (
+            requester_id,
+            control_number,
+            status
+        ) VALUES (?, NULL, 'pending')"
+    );
+
+    $saveSarf->execute([
+        $_SESSION["requester_id"]
+    ]);
+
+    $sarfId = $pdo->lastInsertId();
+
+    // STEP 5: Save the SARF details.
     $saveDetails = $pdo->prepare(
         "INSERT INTO sarf_req (
-            sarf_id, facility_id, type_of_activity,
-            name_of_organizer_office_college, name_of_program,
-            nature_of_activity, start_datetime, end_datetime,
-            participants_type, est_total_participants,
-            in_charge_name, in_charge_designation,
-            in_charge_contact, in_charge_email,
-            source_of_budget, estimated_total_budget, form_data
+            sarf_id,
+            facility_id,
+            type_of_activity,
+            name_of_organizer_office_college,
+            name_of_program,
+            nature_of_activity,
+            start_datetime,
+            end_datetime,
+            participants_type,
+            est_total_participants,
+            in_charge_name,
+            in_charge_designation,
+            in_charge_contact,
+            in_charge_email,
+            source_of_budget,
+            estimated_total_budget,
+            form_data
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
 
@@ -127,8 +231,8 @@ $sarfId = $pdo->lastInsertId();
         $values["organization"],
         $values["title"],
         $values["nature"],
-        $start->format("Y-m-d H:i:s"),
-        $end->format("Y-m-d H:i:s"),
+        $startDateTime,
+        $endDateTime,
         $participantsText,
         (int)$values["participantsTotal"],
         $values["personName"],
@@ -137,18 +241,35 @@ $sarfId = $pdo->lastInsertId();
         $values["personEmail"],
         $budgetSource === "" ? null : $budgetSource,
         $budget,
-        $formData,
+        $formData
     ]);
 
+    // Save both records together.
     $pdo->commit();
 
-http_response_code(201);
+    http_response_code(201);
 
-echo json_encode([
-    "message" => "SARF submitted successfully.",
-    "requestId" => (int)$sarfId
-]);
+    echo json_encode([
+        "message" => "SARF submitted successfully.",
+        "requestId" => (int)$sarfId
+    ]);
+
+} catch (DomainException $error) {
+
+    // Handle schedule conflicts and unavailable facilities.
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+
+    http_response_code($error->getCode());
+
+    echo json_encode([
+        "message" => $error->getMessage()
+    ]);
+
 } catch (Throwable $error) {
+
+    // Handle unexpected database or server errors.
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
@@ -156,7 +277,8 @@ echo json_encode([
     error_log($error->getMessage());
 
     http_response_code(500);
+
     echo json_encode([
-        "message" => $error->getMessage()
+        "message" => "Could not save the request. Please try again."
     ]);
 }

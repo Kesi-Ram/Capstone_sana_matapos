@@ -157,7 +157,7 @@ const slots = picked
                 const key = toDateKey(new Date(y, m, day))
                 const isSunday = (lead + day - 1) % 7 === 0
                 const status = dayStatus(bookings, key)
-                const off = isSunday || key < earliestKey || (minKey && key < minKey) || status === 'full'
+                const off = isSunday || key < earliestKey || (minKey && key < minKey)
                 return (
                   <button
                     key={key}

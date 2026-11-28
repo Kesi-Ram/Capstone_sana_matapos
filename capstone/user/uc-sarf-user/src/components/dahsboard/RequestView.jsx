@@ -37,7 +37,7 @@ function Row({ label, children }) {
   return (
     <div className="detail-row">
       <span className="detail-label">{label}</span>
-      <span className="detail-value">{empty ? '—' : children}</span>
+      <span className="detail-value">{empty ? '' : children}</span>
     </div>
   )
 }
@@ -62,45 +62,69 @@ function Sign({ label, title, name, date }) {
     </div>
   )
 }
+function hasSupport(selected, otherRequirements) {
+  const hasSelectedItems =
+    Array.isArray(selected) && selected.length > 0;
 
-function SupportView({ title, venue, listLabel, items, d, prefix, approver, extra }) {
+  const hasOtherRequirements =
+    typeof otherRequirements === "string" &&
+    otherRequirements.trim() !== "";
+
+  return hasSelectedItems || hasOtherRequirements;
+}
+
+function SupportView({
+  title,
+  venue,
+  listLabel,
+  items,
+  d,
+  prefix,
+  extra
+}) {
   return (
     <div className="box card">
       <div className="card-head">
         {title}
-        {venue !== undefined && <span>Venue: {venue || '—'}</span>}
+
+        {venue !== undefined && (
+          <span>Venue: {venue || "—"}</span>
+        )}
       </div>
+
       <div className="card-body">
         <div>
           <span className="lb">{listLabel}</span>
           <List items={items} />
           {extra}
         </div>
+
         <div>
-          <Row label="Other requirements">{d[`${prefix}OtherRequirements`]}</Row>
-          <Row label="Remarks">{d[`${prefix}Remarks`]}</Row>
+          <Row label="Other requirements">
+            {d[`${prefix}OtherRequirements`]}
+          </Row>
+
+          <Row label="Remarks">
+            {d[`${prefix}Remarks`]}
+          </Row>
         </div>
       </div>
-      <Sign
-        label="Noted and Approved:"
-        title={approver}
-        name={d[`${prefix}ApprovedBy`]}
-        date={d[`${prefix}Date`]}
-      />
     </div>
-  )
+  );
 }
+
 
 function formatRequestId(id) {
   return `REQ-${String(id).padStart(6, '0')}`
 }
 
 // ---------- page ----------
-export default function RequestView({ id, autoPrint }) {
+export default function RequestView({ id }) {
 const [request, setRequest] = useState(null);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState("");
-const printed = useRef(false);
+const [cancelling, setCancelling] = useState(false);
+const [cancelError, setCancelError] = useState("");
 
 useEffect(() => {
   async function fetchRequest() {
@@ -139,21 +163,7 @@ useEffect(() => {
   fetchRequest();
 }, [id]);
 
-  // Opened from "Print / PDF": open the print dialog once the page has rendered.
-  useEffect(() => {
-    if (!autoPrint || !request || printed.current) return
-    printed.current = true
-    const t = setTimeout(() => {
-      window.print()
-      // drop "?print" so a refresh doesn't print again
-      window.history.replaceState(null, '', `#/request/${encodeURIComponent(id)}`)
-    }, 400)
-    return () => clearTimeout(t)
-  }, [autoPrint, request, id])
 
-if (loading) {
-  return <section className="form-section"><p>Loading request...</p></section>;
-}
 
 if (error || !request) {
   return (
@@ -167,6 +177,57 @@ if (error || !request) {
 
   const d = request.data || {}
 
+
+async function cancelRequest() {
+  // Only pending requests can be cancelled.
+  if (!request || request.status !== "pending" || cancelling) {
+    return;
+  }
+
+  // Ask the requester to confirm cancellation.
+  const confirmed = window.confirm(
+    "Are you sure you want to cancel this reservation? Your selected time slots will become available again."
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  setCancelling(true);
+  setCancelError("");
+
+  try {
+    const response = await fetch(`${API_URL}/cancel-request.php`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        requestId: request.id
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Could not cancel the request.");
+    }
+
+    // Update the request status displayed on the page.
+    setRequest({
+      ...request,
+      status: "cancelled"
+    });
+
+  } catch (error) {
+    setCancelError(error.message);
+  } finally {
+    setCancelling(false);
+  }
+}
+
+
   return (
     <>
       <div className="page-heading no-print">
@@ -177,18 +238,27 @@ if (error || !request) {
             <span className="status-pill">{request.status}</span>
           </p>
         </div>
-        <div className="table-actions">
-          <a className="btn secondary" href="#/">← My Requests</a>
-          <button className="btn" type="button" onClick={() => window.print()}>
-            Print / Save as PDF
-          </button>
-        </div>
+        
+<div className="table-actions">
+
+  <a className="btn secondary" href="#/">
+    ← My Requests
+  </a>
+
+  {request.status === "pending" && (
+    <button
+      className="btn secondary"
+      type="button"
+      onClick={cancelRequest}
+      disabled={cancelling}
+    >
+      {cancelling ? "Cancelling..." : "Cancel Request"}
+    </button>
+  )}
+</div>
+
       </div>
 
-
-<div className="print-only print-title">
-  <strong>UNIVERSITY OF THE CORDILLERAS</strong>
-</div>
 
 <div className="detail-sheet">
 
@@ -251,33 +321,6 @@ if (error || !request) {
               <Row label="Contact">{d.personContact}</Row>
               <Row label="Email">{d.personEmail}</Row>
             </div>
-
-            <div className="box">
-              <div className="box-title">
-                Liability Waiver<small>(Accomplished by the Adviser/Coordinator)</small>
-              </div>
-              <Sign label="Signature:" title="ADVISER/COORDINATOR" name={d.adviserName} date={d.adviserDate} />
-            </div>
-          </div>
-
-          <div className="col">
-            <div className="box">
-              <Row label="Remarks / Conditions">{d.remarks}</Row>
-            </div>
-
-            <div className="box">
-              <span className="lb">Checklist (For Review Use Only)</span>
-              <List items={d.checklist || []} />
-            </div>
-
-            <div className="box">
-              <div className="box-title">Signatures</div>
-              <Sign label="Submitted by:" title="President/Organizer" name={d.presidentName} date={d.presidentDate} />
-              <Sign label="Noted by:" title="Adviser/Coordinator" name={d.adviserNotedName} date={d.adviserNotedDate} />
-              <Sign label="Recommending Approval:" title="Academic Dean/Prog. Chair" name={d.deanName} date={d.deanDate} />
-              <Sign label="Approved by:" title="VP for Academics and Research" name={d.vpAcadName} date={d.vpAcadDate} />
-              <Sign label="Venue Reserved:" title="Campus Facilities, Planning & Dev’t Officer" name={d.venueReservedName} date={d.venueReservedDate} />
-            </div>
           </div>
         </div>
 
@@ -301,50 +344,108 @@ if (error || !request) {
         </div>
 
         {/* ================= PAGE 2 ================= */}
-        <div className="page-break" />
-        <p className="section-sub">Page 2 – Support Requirements</p>
+        
+{(
+  hasSupport(d.bmo, d.bmoOtherRequirements) ||
+  hasSupport(d.lmo, d.lmoOtherRequirements) ||
+  hasSupport(d.itss, d.itssOtherRequirements) ||
+  hasSupport(d.admin, d.adminOtherRequirements) ||
+  hasSupport(d.charges, d.fmoOtherRequirements) ||
+  Boolean(d.fmoRemarks?.trim())
+) && (
+  <>
+    <h2>Additional Support Requirements</h2>
 
-        <div className="cols">
-          <SupportView
-            title="For BMO Support" venue={d.bmoVenue} listLabel="Technical Requirements:"
-            items={describe(BMO, d.bmo, d)} d={d} prefix="bmo" approver="Personnel In-Charge"
-          />
-          <SupportView
-            title="For LMO Support" listLabel="Property Requirements:"
-            items={describe(LMO, d.lmo, d)} d={d} prefix="lmo" approver="Head, LMO"
-          />
-          <SupportView
-            title="For ITSS Support" listLabel="Support Requirements:"
-            items={describe(ITSS, d.itss, d)} d={d} prefix="itss" approver="Director"
-          />
-          <SupportView
-            title="For ADMINISTRATIVE Support" listLabel="Support Requirements:"
-            items={describe(ADMIN, d.admin, d)} d={d} prefix="admin"
-            approver="VP for Admin. and Acad. Services"
-            extra={<Row label="Green board posting text">{d.greenBoardText}</Row>}
-          />
+    <div className="cols">
+
+      {hasSupport(d.bmo, d.bmoOtherRequirements) && (
+        <SupportView
+          title="For BMO Support"
+          venue={d.bmoVenue}
+          listLabel="Technical Requirements:"
+          items={describe(BMO, d.bmo || [], d)}
+          d={d}
+          prefix="bmo"
+        />
+      )}
+
+      {hasSupport(d.lmo, d.lmoOtherRequirements) && (
+        <SupportView
+          title="For LMO Support"
+          listLabel="Property Requirements:"
+          items={describe(LMO, d.lmo || [], d)}
+          d={d}
+          prefix="lmo"
+        />
+      )}
+
+      {hasSupport(d.itss, d.itssOtherRequirements) && (
+        <SupportView
+          title="For ITSS Support"
+          listLabel="Support Requirements:"
+          items={describe(ITSS, d.itss || [], d)}
+          d={d}
+          prefix="itss"
+        />
+      )}
+
+      {hasSupport(d.admin, d.adminOtherRequirements) && (
+        <SupportView
+          title="For Administrative Support"
+          listLabel="Support Requirements:"
+          items={describe(ADMIN, d.admin || [], d)}
+          d={d}
+          prefix="admin"
+          extra={
+            <Row label="Green board posting text">
+              {d.greenBoardText}
+            </Row>
+          }
+        />
+      )}
+
+    </div>
+
+    {(
+      hasSupport(d.charges, d.fmoOtherRequirements) ||
+      Boolean(d.fmoRemarks?.trim())
+    ) && (
+      <div className="box card">
+        <div className="card-head">
+          For FMO Use
         </div>
 
-        <div className="box card">
-          <div className="card-head">For FMO Use:</div>
-          <div className="fmo">
-            <div>
-              <span className="lb">Applicable Charges</span>
-              <List items={describe(CHARGES, d.charges, d)} />
-              <Row label="TOTAL">{d.chargeTotal}</Row>
-            </div>
-            <div>
-              <Row label="Other requirements">{d.fmoOtherRequirements}</Row>
-              <Row label="Remarks">{d.fmoRemarks}</Row>
-            </div>
-            <div>
-              <Sign label="Service Agreement – Signature:" title="In-charge of Activity"
-                name={d.fmoInChargeName} date={d.fmoInChargeDate} />
-            </div>
+        <div className="card-body">
+          <div>
+            <span className="lb">
+              Applicable Charges
+            </span>
+
+            <List
+              items={describe(CHARGES, d.charges || [], d)}
+            />
+
+            <Row label="Total">
+              {d.chargeTotal}
+            </Row>
           </div>
-          <Sign label="Approved and Reserved:" title="Campus Facilities, Planning & Dev’t Officer"
-            name={d.fmoApprovedandReserved} date={d.fmoApprovalDate} />
+
+          <div>
+            <Row label="Other Requirements">
+              {d.fmoOtherRequirements}
+            </Row>
+
+            <Row label="Remarks">
+              {d.fmoRemarks}
+            </Row>
+          </div>
         </div>
+      </div>
+    )}
+
+  </>
+)}
+
       </div>
     </>
   )

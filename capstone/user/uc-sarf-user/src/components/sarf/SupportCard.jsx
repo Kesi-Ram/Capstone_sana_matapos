@@ -1,4 +1,4 @@
-import { CheckGroup, Input, SignBlock, TextArea } from './fields'
+import { CheckGroup, Input,  TextArea } from './fields'
 
 // One "For BMO / LMO / ITSS / ADMINISTRATIVE Support" card on page 2.
 export default function SupportCard({ prefix, title, listLabel, options, venueField, children, approver }) {
@@ -19,12 +19,6 @@ export default function SupportCard({ prefix, title, listLabel, options, venueFi
           <TextArea name={`${prefix}Remarks`} label="Remarks" />
         </div>
       </div>
-      <SignBlock
-        label="Noted and Approved:"
-        title={approver}
-        nameKey={`${prefix}ApprovedBy`}
-        dateKey={`${prefix}Date`}
-      />
     </div>
   )
 }
